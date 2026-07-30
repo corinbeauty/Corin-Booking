@@ -955,7 +955,15 @@
 
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'services'), (snap) => {
                         let data = snap.docs.map(d => ({ id: d.id, sortOrder: 0, ...d.data() }));
-                        data.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+                        // 以手動排序為主，如果相同則以價格降序
+                        data.sort((a, b) => {
+                            const orderA = a.sortOrder || 0;
+                            const orderB = b.sortOrder || 0;
+                            if (orderA !== orderB) return orderA - orderB;
+                            const priceA = Number(a.regularPrice || a.price || 0);
+                            const priceB = Number(b.regularPrice || b.price || 0);
+                            return priceB - priceA;
+                        });
                         services.value = data;
                     }, (err) => console.error(err));
 
@@ -986,7 +994,14 @@
                         if (!s.isActive) return false;
                         if (!bookingForm.value.customerGender) return true;
                         return !s.genderTarget || s.genderTarget === 'all' || s.genderTarget === bookingForm.value.customerGender;
-                    }).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)); // 確保前台依照排序號碼顯示
+                    }).sort((a, b) => {
+                        const orderA = a.sortOrder || 0;
+                        const orderB = b.sortOrder || 0;
+                        if (orderA !== orderB) return orderA - orderB;
+                        const priceA = Number(a.regularPrice || a.price || 0);
+                        const priceB = Number(b.regularPrice || b.price || 0);
+                        return priceB - priceA;
+                    });
                 });
 
                 // 動態計算前端預估總價與總時長
@@ -1366,6 +1381,13 @@
                         const matchSearch = s.name.toLowerCase().includes(serviceSearch.value.toLowerCase());
                         const matchGender = serviceFilterGender.value === 'all' || s.genderTarget === serviceFilterGender.value;
                         return matchSearch && matchGender;
+                    }).sort((a, b) => {
+                        const orderA = a.sortOrder || 0;
+                        const orderB = b.sortOrder || 0;
+                        if (orderA !== orderB) return orderA - orderB;
+                        const priceA = Number(a.regularPrice || a.price || 0);
+                        const priceB = Number(b.regularPrice || b.price || 0);
+                        return priceB - priceA;
                     });
                 });
 
@@ -1450,9 +1472,9 @@
                                 {name: 'V + I + O', duration: 60, regularPrice: 2599, vipPrice: 2080, genderTarget: 'male', icon: 'fa-solid fa-heart', isActive: true},
                             ];
                             const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'services');
-                            // 預設匯入時，以陣列索引作為排序依據
+                            // 預設匯入時，以 0 作為排序預設，自動進入價格降序
                             for (let i = 0; i < defaults.length; i++) {
-                                await addDoc(colRef, { ...defaults[i], sortOrder: i });
+                                await addDoc(colRef, { ...defaults[i], sortOrder: 0 });
                             }
                             showAlert('成功', '預設品項已全部匯入完畢！');
                         } catch(e) {
