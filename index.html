@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/zh-tw.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         tailwind.config = {
@@ -76,7 +77,6 @@
 
   <div id="app" v-cloak class="min-h-screen flex flex-col">
 
-    <!-- 前台預約介面 -->
     <template v-if="currentView === 'front'">
         <header class="sticky top-0 z-50 glass-panel border-b border-gray-100">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
@@ -114,8 +114,7 @@
 
             <form id="bookingForm" class="space-y-6" @submit.prevent="submitBooking">
                 
-                <!-- 步驟 1: 會員驗證 -->
-                <div class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-brand-100">
+                <div class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-brand-100" id="step1">
                     <div class="flex justify-between items-end mb-2">
                         <label class="block text-sm font-bold text-gray-800">1. 會員驗證 <span class="text-red-400">*</span></label>
                         <button type="button" @click="goToRegister" class="text-xs text-brand-600 hover:text-brand-800 font-medium underline underline-offset-2 flex items-center gap-1">
@@ -138,7 +137,6 @@
                     </div>
                 </div>
 
-                <!-- 步驟 2: 選擇美容師性別 -->
                 <transition name="step">
                     <div v-show="isVerified" id="step2" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800">2. 選擇指定美容師 <span class="text-red-400">*</span></label>
@@ -161,7 +159,6 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 3: 選擇 VIP 身份 -->
                 <transition name="step">
                     <div v-show="isVerified && bookingForm.therapistGender" id="step3" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800">3. 是否為 VIP 會員 <span class="text-red-400">*</span></label>
@@ -187,20 +184,19 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 4: 選擇客戶性別 -->
                 <transition name="step">
                     <div v-show="bookingForm.isVip !== null" id="step4" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800">4. 請選擇您的性別 <span class="text-red-400">*</span></label>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="relative">
-                                <input type="radio" name="customer_gender" id="cust_female" value="female" v-model="bookingForm.customerGender" class="service-radio hidden" required>
+                                <input type="radio" name="customer_gender" id="cust_female" value="female" v-model="bookingForm.customerGender" @change="scrollToNext('step5')" class="service-radio hidden" required>
                                 <label for="cust_female" :class="bookingForm.customerGender === 'female' ? 'border-pink-300 bg-pink-50 text-pink-700 shadow-inner' : 'border-gray-100 hover:bg-gray-50 text-gray-500'" class="flex flex-col items-center justify-center p-4 border-2 rounded-xl cursor-pointer h-full transition-all">
                                     <i class="fa-solid fa-venus text-3xl mb-2" :class="bookingForm.customerGender === 'female' ? 'text-pink-500' : 'text-gray-300'"></i>
                                     <span class="text-sm font-medium">我是女生</span>
                                 </label>
                             </div>
                             <div class="relative">
-                                <input type="radio" name="customer_gender" id="cust_male" value="male" v-model="bookingForm.customerGender" class="service-radio hidden" required>
+                                <input type="radio" name="customer_gender" id="cust_male" value="male" v-model="bookingForm.customerGender" @change="scrollToNext('step5')" class="service-radio hidden" required>
                                 <label for="cust_male" :class="bookingForm.customerGender === 'male' ? 'border-blue-300 bg-blue-50 text-blue-700 shadow-inner' : 'border-gray-100 hover:bg-gray-50 text-gray-500'" class="flex flex-col items-center justify-center p-4 border-2 rounded-xl cursor-pointer h-full transition-all">
                                     <i class="fa-solid fa-mars text-3xl mb-2" :class="bookingForm.customerGender === 'male' ? 'text-blue-500' : 'text-gray-300'"></i>
                                     <span class="text-sm font-medium">我是男生</span>
@@ -210,9 +206,8 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 5: 選擇服務項目 (可多選) -->
                 <transition name="step">
-                    <div v-show="bookingForm.customerGender" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div v-show="bookingForm.customerGender" id="step5" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800 mb-2">5. 選擇服務項目 (可多選) <span class="text-red-400">*</span></label>
                         
                         <div v-if="activeServices.length === 0" class="text-center py-4 bg-gray-50 rounded-xl text-gray-500 text-sm">
@@ -223,7 +218,10 @@
                             <div v-for="service in activeServices" :key="service.id" class="relative">
                                 <input type="checkbox" name="service" :id="'srv_' + service.id" :value="service.name" v-model="bookingForm.service" class="service-radio hidden">
                                 <label :for="'srv_' + service.id" :class="bookingForm.service.includes(service.name) ? 'border-brand-400 bg-brand-50 text-brand-800 shadow-inner' : 'border-gray-200 hover:bg-gray-50'" class="flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer h-full transition-all">
-                                    <i :class="[service.icon, bookingForm.service.includes(service.name) ? 'text-brand-500' : 'text-gray-400']" class="text-2xl mb-2"></i>
+                                    
+                                    <!-- 專屬象形圖渲染 -->
+                                    <div v-html="renderIcon(service.icon)" :class="[bookingForm.service.includes(service.name) ? 'text-brand-500' : 'text-gray-400']" class="w-10 h-10 mb-2 flex items-center justify-center"></div>
+                                    
                                     <span class="text-sm font-medium text-center">{{ service.name }}</span>
                                     <div class="flex flex-col items-center mt-1">
                                         <span class="text-xs" :class="bookingForm.service.includes(service.name) ? 'text-brand-600' : 'text-gray-400'">{{ service.duration }} mins</span>
@@ -250,7 +248,6 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 6: 選擇日期 -->
                 <transition name="step">
                     <div v-show="bookingForm.service.length > 0" id="step6" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800 border-b pb-2">6. 選擇預約日期 <span class="text-red-400">*</span></label>
@@ -265,7 +262,6 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 7: 選擇時間 -->
                 <transition name="step">
                     <div v-show="bookingForm.date" id="step7" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex items-center justify-between border-b pb-2">
@@ -296,7 +292,6 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 8: 備註與確認送出 -->
                 <transition name="step">
                     <div v-show="bookingForm.time" id="step8" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <h3 class="text-sm font-bold text-gray-800 border-b pb-2">8. 顧客備註 <span class="text-gray-400 text-xs font-normal">(選填)</span></h3>
@@ -304,13 +299,6 @@
                         <div>
                             <textarea id="notes" v-model="bookingForm.notes" rows="3" class="block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 bg-gray-50 focus:bg-white transition-colors resize-none" placeholder="是否有特殊需求？"></textarea>
                         </div>
-                    </div>
-                </transition>
-
-                <transition name="step">
-                    <div v-show="bookingForm.time" class="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg flex items-start gap-3">
-                        <i class="fa-solid fa-circle-info mt-0.5"></i>
-                        <p>送出預約後，系統將自動帶入您的資訊至 LINE 聊天室。<strong>請務必送出訊息</strong>，待美容師回覆確認後，才算預約成功喔！</p>
                     </div>
                 </transition>
                 
@@ -330,7 +318,6 @@
             </div>
         </transition>
 
-        <!-- VIP 資訊 Modal -->
         <div v-if="showVipInfo" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity" @click="showVipInfo = false">
             <div class="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl relative animate-[bounce_0.3s_ease-out]" @click.stop>
                 <button @click="showVipInfo = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
@@ -349,7 +336,6 @@
         </div>
     </template>
 
-    <!-- 後台登入 -->
     <template v-else-if="currentView === 'admin_login'">
         <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div class="max-w-sm w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
@@ -382,7 +368,6 @@
         </div>
     </template>
 
-    <!-- 後台管理 -->
     <template v-else-if="currentView === 'admin'">
         <header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
             <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -618,7 +603,7 @@
                                     </td>
                                     <td class="px-4 py-3 font-medium text-gray-900">
                                         <div class="flex items-center gap-2">
-                                            <i :class="service.icon" class="text-gray-400 w-5 text-center"></i> 
+                                            <span v-html="renderIcon(service.icon)" class="text-gray-400 w-5 h-5 inline-block text-center flex-shrink-0"></span>
                                             {{ service.name }}
                                         </div>
                                         <div class="text-[10px] text-gray-500 ml-7 mt-0.5">
@@ -803,7 +788,7 @@
                             <label v-for="icon in availableIcons" :key="icon" class="cursor-pointer">
                                 <input type="radio" name="icon" :value="icon" v-model="formService.icon" class="sr-only peer">
                                 <div class="flex items-center justify-center p-3 border rounded-lg peer-checked:border-admin-500 peer-checked:bg-admin-50 peer-checked:text-admin-600 text-gray-400 hover:bg-gray-50 transition-colors">
-                                    <i :class="icon" class="text-xl"></i>
+                                    <div v-html="renderIcon(icon)" class="w-6 h-6"></div>
                                 </div>
                             </label>
                         </div>
@@ -822,34 +807,11 @@
         <p class="text-gray-600 font-medium">處理中...</p>
     </div>
 
-    <!-- Alert Modal -->
-    <div v-if="alert.show" class="fixed inset-0 bg-black/50 z-[160] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-[bounce_0.3s_ease-out]">
-            <div class="text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4" :class="getAlertColorClass('bg')">
-                    <i :class="[getAlertIcon(), getAlertColorClass('text')]" class="text-xl"></i>
-                </div>
-                <h3 class="text-lg leading-6 font-bold text-gray-900 mb-2">{{ alert.title }}</h3>
-                <div class="mt-2 text-left">
-                    <p class="text-sm text-gray-500 whitespace-pre-line">{{ alert.message }}</p>
-                </div>
-            </div>
-            <div class="mt-6 flex flex-col gap-2">
-                <button v-if="alert.action" @click="handleAlertAction" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-3 text-base font-medium text-white focus:outline-none transition-colors" :class="getAlertBtnClass()">
-                    {{ alert.actionText }}
-                </button>
-                <button type="button" @click="closeAlert" class="w-full inline-flex justify-center rounded-xl border shadow-sm px-4 py-3 text-base font-medium focus:outline-none transition-colors" :class="alert.action ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' : getAlertBtnClass()">
-                    {{ alert.action ? '取消' : '確定' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-  </div> <!-- End of #app -->
+  </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
@@ -871,7 +833,6 @@
                 let auth = null;
                 const isDbReady = ref(false);
 
-                // --- State Management ---
                 const currentView = ref('front'); 
                 const adminTab = ref('calendar'); 
                 const isLoading = ref(false);
@@ -881,7 +842,6 @@
                 const closedDatesMap = ref({}); 
                 const admins = ref([]);
 
-                // --- Authentication (Admin) ---
                 const adminAccount = ref('');
                 const adminPassword = ref('');
                 const loginError = ref('');
@@ -890,11 +850,25 @@
                 
                 const showVipInfo = ref(false);
 
-                // Service Filter
                 const serviceSearch = ref('');
                 const serviceFilterGender = ref('all');
 
-                // --- Helpers ---
+                // === SVG 象形圖庫 ===
+                const customSvgIcons = {
+                    'svg-face': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 21a8 8 0 0 0 8-8c0-5.5-4-11-8-11S4 7.5 4 13a8 8 0 0 0 8 8z"/><path d="M12 14v3"/></svg>',
+                    'svg-arm': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M14 3l-3 9-3-2-2 7 4 3 6-11z"/></svg>',
+                    'svg-leg': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M10 3v12a2 2 0 0 0 1 1.73V21a1 1 0 0 0 2 0v-4.27A2 2 0 0 0 14 15V3"/></svg>',
+                    'svg-body': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M8 4h8v7c0 3-1.5 5-4 5s-4-2-4-5V4z"/><path d="M12 12v.01"/></svg>',
+                    'svg-vio': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M4 8l8 10 8-10c-5-2-11-2-16 0z"/><circle cx="12" cy="11" r="1.5"/></svg>',
+                    'svg-underarm': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M5 8c3-1.5 6-1.5 9 0M5 16c3-1.5 6-1.5 9 0M10 4v16"/></svg>'
+                };
+
+                const renderIcon = (iconClass) => {
+                    if (!iconClass) return '';
+                    if (customSvgIcons[iconClass]) return customSvgIcons[iconClass];
+                    return `<i class="${iconClass}"></i>`;
+                };
+
                 const timeToMins = (timeStr) => {
                     if(!timeStr) return 0;
                     const [h, m] = timeStr.split(':').map(Number);
@@ -906,20 +880,17 @@
                     return `${h}:${m}`;
                 };
 
-                // --- Initialization ---
                 const initFirebase = async () => {
                     try {
                         const app = initializeApp(userFirebaseConfig);
                         db = getFirestore(app);
                         auth = getAuth(app);
-                        
                         await signInAnonymously(auth);
 
                         setupFirestoreListeners();
                         isDbReady.value = true;
                     } catch(e) {
-                        console.warn("Firebase 初始化失敗。");
-                        services.value = [{ id: '1', name: '私密處 VIO', duration: 60, regularPrice: 1799, vipPrice: 1440, icon: 'fa-solid fa-leaf', isActive: true, genderTarget: 'all', sortOrder: 0 }];
+                        Swal.fire('系統錯誤', '驗證連線失敗，請稍後再試。', 'error');
                     }
                 };
 
@@ -937,7 +908,7 @@
                             return priceB - priceA;
                         });
                         services.value = data;
-                    }, (err) => console.error(err));
+                    });
 
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'), (snap) => {
                         let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -946,85 +917,106 @@
                             return a.time.localeCompare(b.time);
                         });
                         bookings.value = data;
-                    }, (err) => console.error(err));
+                    });
 
                     onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'schedule'), (snap) => {
                         if (snap.exists()) closedDatesMap.value = snap.data().dates || {};
                         else closedDatesMap.value = {};
-                    }, (err) => console.error(err));
+                    });
 
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'admins'), (snap) => {
                         admins.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    }, (err) => console.error(err));
+                    });
                 };
 
-                // 表單綁定
                 const verifyPhone = ref('');
                 const isVerified = ref(false);
                 const bookingForm = ref({ therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', name: '', phone: '', birthday: '', notes: '' });
                 
-                // 平滑捲動工具 (Radio 按鈕專用)
                 const scrollToNext = (targetId) => {
                     setTimeout(() => {
                         const el = document.getElementById(targetId);
                         if (el) {
                             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                    }, 350); // 給 Vue 動畫一點時間展開
+                    }, 300); 
                 };
 
-                // 會員驗證邏輯
                 const checkMember = async () => {
                     if (!verifyPhone.value) {
-                        showAlert('提示', '請輸入手機號碼', 'warning');
+                        Swal.fire('提示', '請輸入手機號碼', 'warning');
                         return;
                     }
                     if (!isDbReady.value) {
-                        showAlert('系統錯誤', '資料庫連線中，請稍後再試。', 'error');
+                        Swal.fire('系統錯誤', '資料庫連線中，請稍後再試。', 'error');
                         return;
                     }
                     
                     isLoading.value = true;
                     try {
                         const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'beauty_members'), where('phone', '==', verifyPhone.value));
-                const snap = await getDocs(q);
-                
-                if (!snap.empty) {
-                    const data = snap.docs[0].data();
-                    bookingForm.value.name = data.name || '';
-                    bookingForm.value.phone = data.phone || verifyPhone.value;
-                    
-                    // 處理生日，只抓取月與日
-                    let bd = data.birthday || '';
-                    if (bd) {
-                        const parts = bd.split(/[-/]/);
-                        if (parts.length >= 2) {
-                            // 擷取最後兩個部分當作月與日 (例：1990-05-20 轉為 05/20)
-                            bd = `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
-                        }
-                    }
-                    bookingForm.value.birthday = bd;
-                    
-                    isVerified.value = true;
-                    
-                    showAlert('驗證成功', `歡迎回來，${bookingForm.value.name}！\n請繼續完成下方預約步驟。`, 'success');
-                    scrollToNext('step2');
-                } else {
-                            showAlert('查無會員資料', '系統中找不到您的手機號碼。\n即將為您導向註冊頁面...', 'error', () => {
+                        const snap = await getDocs(q);
+                        
+                        if (!snap.empty) {
+                            const data = snap.docs[0].data();
+                            bookingForm.value.name = data.name || '';
+                            bookingForm.value.phone = data.phone || verifyPhone.value;
+                            
+                            let bd = data.birthday || '';
+                            if (bd) {
+                                const parts = bd.split(/[-/]/);
+                                if (parts.length >= 2) {
+                                    bd = `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+                                }
+                            }
+                            bookingForm.value.birthday = bd;
+                            isVerified.value = true;
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: '驗證成功',
+                                html: `歡迎回來，<strong>${bookingForm.value.name}</strong>！<br><span style="font-size: 0.9em; color: #d33;">※ 送出後需待美容師回覆才算預約成功唷~<br>請耐心等候！</span>`,
+                                confirmButtonColor: '#c5a89c'
+                            }).then(() => {
+                                scrollToNext('step2');
+                            });
+                        } else {
+                            let timerInterval;
+                            Swal.fire({
+                                icon: 'error',
+                                title: '查無會員資料',
+                                html: '系統中找不到您的手機號碼。<br>將在 <b></b> 秒後為您導向註冊頁面...',
+                                timer: 2500,
+                                timerProgressBar: true,
+                                showConfirmButton: false,
+                                didOpen: () => {
+                                    const b = Swal.getHtmlContainer().querySelector('b');
+                                    timerInterval = setInterval(() => { b.textContent = Math.ceil(Swal.getTimerLeft() / 1000); }, 100);
+                                },
+                                willClose: () => { clearInterval(timerInterval); }
+                            }).then(() => {
                                 window.location.href = 'https://check-balance-jbiy.vercel.app/';
-                            }, '前往註冊');
+                            });
                         }
                     } catch(e) {
                         console.error(e);
-                        showAlert('錯誤', '驗證時發生錯誤，請稍後再試', 'error');
+                        Swal.fire('錯誤', '驗證時發生錯誤，請稍後再試', 'error');
                     }
                     isLoading.value = false;
                 };
 
                 const goToRegister = () => {
-                    showAlert('前往註冊', '註冊完成後，請重新回到此頁面進行預約唷！', 'info', () => {
-                        window.location.href = 'https://check-balance-jbiy.vercel.app/';
-                    }, '我知道了，前往註冊');
+                    Swal.fire({
+                        icon: 'info',
+                        title: '前往註冊',
+                        text: '註冊完成後，請重新回到此頁面進行預約唷！',
+                        confirmButtonText: '我知道了，前往註冊',
+                        confirmButtonColor: '#c5a89c'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = 'https://check-balance-jbiy.vercel.app/';
+                        }
+                    });
                 };
 
                 const resetVerification = () => {
@@ -1141,7 +1133,6 @@
                     return slots;
                 });
 
-                // 重設下游欄位的防呆邏輯
                 watch(() => bookingForm.value.therapistGender, () => {
                     bookingForm.value.isVip = null;
                     bookingForm.value.customerGender = '';
@@ -1213,10 +1204,14 @@
 
                         setTimeout(() => {
                             isLoading.value = false;
+                            
                             if (typeof liff !== 'undefined' && liff.isInClient()) {
                                 liff.sendMessages([{ type: 'text', text: messageText }])
-                                    .then(() => liff.closeWindow())
+                                    .then(() => {
+                                        liff.closeWindow();
+                                    })
                                     .catch(err => {
+                                        alert(`⚠️ LINE 自動傳送攔截\n\n原因: ${err.message}\n\n可能是您尚未在 LINE Developers 後台開啟「chat_message.write」權限。\n\n為確保預約不中斷，系統將為您跳轉，請「手動選擇本官方帳號」貼上發送！`);
                                         window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
                                         resetVerification();
                                     });
@@ -1227,7 +1222,7 @@
                         }, 800);
                     } catch(e) {
                         console.error(e);
-                        showAlert('錯誤', '預約送出失敗，請稍後再試。', 'error');
+                        Swal.fire('錯誤', '預約送出失敗，請稍後再試。', 'error');
                         isLoading.value = false;
                     }
                 };
@@ -1276,7 +1271,6 @@
                     window.location.hash = '';
                 };
 
-                // --- Schedule (Custom Dates) ---
                 let adminCalendar = null;
                 const isDateSettingModalOpen = ref(false);
                 const editingDate = ref('');
@@ -1323,7 +1317,6 @@
                     if (newTab === 'schedule') nextTick(() => { initAdminCalendar(); });
                 });
 
-                // --- Calendar View Logic (Stats & UI) ---
                 const calendarDate = ref(new Date());
                 const currentYear = computed(() => calendarDate.value.getFullYear());
                 const currentMonth = computed(() => calendarDate.value.getMonth());
@@ -1373,12 +1366,11 @@
                 const nextMonth = () => { calendarDate.value = new Date(currentYear.value, currentMonth.value + 1, 1); };
                 const goToToday = () => { calendarDate.value = new Date(); };
 
-                // --- Bookings Management ---
                 const isBookingModalOpen = ref(false);
                 const editBookingForm = ref({});
                 
                 const getBookingColorClass = (b) => {
-                    if (b.status === 'pending' || !b.status) return 'bg-yellow-200 text-yellow-800 border border-yellow-300';
+                    if (b.status === 'pending' || !b.status) return 'bg-yellow-200 text-yellow-800 border border-yellow-400 font-medium';
                     if (b.status === 'cancelled') return 'bg-gray-100 text-gray-400 border border-gray-200 opacity-60';
                     if (b.status === 'completed') return 'bg-green-100 text-green-700 border border-green-200';
                     return b.therapistGender === 'female' ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-blue-100 text-blue-700 border border-blue-200';
@@ -1406,14 +1398,26 @@
                             notes: editBookingForm.value.notes || ''
                         });
                         closeBookingModal();
-                        showAlert('成功', '預約時間及備註已更新');
-                    } catch(e) { showAlert('錯誤', '更新失敗', 'error'); }
+                        Swal.fire('成功', '預約時間及備註已更新', 'success');
+                    } catch(e) { Swal.fire('錯誤', '更新失敗', 'error'); }
                 };
 
                 const deleteBooking = (id) => {
-                    showAlert('確認刪除', '確定要刪除這筆紀錄嗎？', 'warning', async () => {
-                        if(isDbReady.value) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', id));
-                    }, '確定刪除');
+                    Swal.fire({
+                        title: '確認刪除',
+                        text: '確定要刪除這筆紀錄嗎？此動作無法復原！',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#9ca3af',
+                        confirmButtonText: '確定刪除',
+                        cancelButtonText: '取消'
+                    }).then(async (result) => {
+                        if (result.isConfirmed && isDbReady.value) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', id));
+                            Swal.fire('已刪除', '紀錄已成功刪除', 'success');
+                        }
+                    });
                 };
 
                 const copyStatusMessage = (b) => {
@@ -1423,7 +1427,7 @@
                     } else if (b.status === 'cancelled') {
                         msg = `您好 ${b.name}！\n不好意思，您於 ${b.date} ${b.time} 預約的【${b.service}】因故已為您取消。\n如需重新預約，歡迎隨時與我們聯繫！`;
                     } else {
-                        msg = `您好 ${b.name}！\n您於 ${b.date} ${b.time} 預約的【${b.service}】目前正在確認中，請稍候片刻！`;
+                        msg = `您好 ${b.name}！\n您於 ${b.date} ${b.time} 預約的【${b.service}】目前正在為您確認排程中，請稍候片刻！`;
                     }
                     
                     const tempInput = document.createElement("textarea");
@@ -1433,10 +1437,15 @@
                     document.execCommand("copy");
                     document.body.removeChild(tempInput);
                     
-                    showAlert('已複製', '文字已複製！請至 LINE 對話框貼上給客人。', 'success');
+                    Swal.fire({
+                        title: '文字已複製！',
+                        text: '請直接切換至 LINE 聊天室，將文字「貼上」傳送給客人',
+                        icon: 'success',
+                        confirmButtonColor: '#22c55e',
+                        confirmButtonText: '好的'
+                    });
                 };
 
-                // --- Services Management ---
                 const filteredServices = computed(() => {
                     return services.value.filter(s => {
                         const matchSearch = s.name.toLowerCase().includes(serviceSearch.value.toLowerCase());
@@ -1463,20 +1472,20 @@
 
                 const isServiceModalOpen = ref(false);
                 const editingService = ref(null);
-                const formService = ref({ name: '', duration: 60, regularPrice: 0, vipPrice: 0, icon: 'fa-solid fa-leaf', isActive: true, genderTarget: 'all', sortOrder: 0 });
+                const formService = ref({ name: '', duration: 60, regularPrice: 0, vipPrice: 0, icon: 'svg-face', isActive: true, genderTarget: 'all', sortOrder: 0 });
+                
                 const availableIcons = [
-                    'fa-solid fa-leaf', 'fa-solid fa-person-dress', 'fa-solid fa-person', 'fa-solid fa-hand-sparkles',
-                    'fa-solid fa-droplet', 'fa-solid fa-scissors', 'fa-solid fa-heart', 'fa-solid fa-star',
-                    'fa-solid fa-face-smile', 'fa-solid fa-spa'
+                    'svg-face', 'svg-arm', 'svg-leg', 'svg-body', 'svg-vio', 'svg-underarm',
+                    'fa-solid fa-leaf', 'fa-solid fa-droplet', 'fa-solid fa-hand-sparkles', 'fa-solid fa-heart'
                 ];
 
                 const openServiceModal = (service = null) => {
                     editingService.value = service;
-                    formService.value = service ? { ...service, regularPrice: service.regularPrice || service.price || 0, vipPrice: service.vipPrice || service.price || 0, sortOrder: service.sortOrder || 0 } : { name: '', duration: 60, regularPrice: 0, vipPrice: 0, icon: 'fa-solid fa-leaf', isActive: true, genderTarget: 'all', sortOrder: 0 };
+                    formService.value = service ? { ...service, regularPrice: service.regularPrice || service.price || 0, vipPrice: service.vipPrice || service.price || 0, sortOrder: service.sortOrder || 0 } : { name: '', duration: 60, regularPrice: 0, vipPrice: 0, icon: 'svg-face', isActive: true, genderTarget: 'all', sortOrder: 0 };
                     isServiceModalOpen.value = true;
                 };
                 const copyService = (service) => {
-                    editingService.value = null;
+                    editingService.value = null; 
                     formService.value = { ...service, name: service.name + ' (複製)', id: undefined, regularPrice: service.regularPrice || service.price || 0, vipPrice: service.vipPrice || service.price || 0, sortOrder: service.sortOrder || 0 };
                     isServiceModalOpen.value = true;
                 };
@@ -1502,74 +1511,98 @@
                 };
 
                 const deleteService = (id) => {
-                    showAlert('確認刪除', '確定要刪除這個服務品項嗎？', 'warning', async () => {
-                        if(isDbReady.value) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'services', id));
-                    }, '確定刪除');
+                    Swal.fire({
+                        title: '確認刪除',
+                        text: '確定要刪除這個服務品項嗎？',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#9ca3af',
+                        confirmButtonText: '確定刪除'
+                    }).then(async (result) => {
+                        if (result.isConfirmed && isDbReady.value) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'services', id));
+                        }
+                    });
                 };
 
                 const importDefaultServices = async () => {
                     if (!isDbReady.value) return;
-                    showAlert('確認匯入', '即將自動為您匯入小部位、中部位、大部位及私密處預設品項（共 46 項）。確定要匯入嗎？', 'warning', async () => {
-                        isLoading.value = true;
-                        try {
-                            const defaults = [
-                                ...['腋下','唇周','乳暈','後頸','下巴','肚臍','膝蓋','指頭','鬢角'].map(n => ({name: n, duration: 20, regularPrice: 399, vipPrice: 320, genderTarget: 'female', icon: 'fa-solid fa-leaf', isActive: true})),
-                                ...['腋下','唇周','乳暈','後頸','下巴','肚臍','膝蓋','指頭','鬢角'].map(n => ({name: n, duration: 20, regularPrice: 599, vipPrice: 480, genderTarget: 'male', icon: 'fa-solid fa-leaf', isActive: true})),
-                                ...['上手','下手','全臉','上腹','下腹','上背','下背','落腮鬍'].map(n => ({name: n, duration: 30, regularPrice: 699, vipPrice: 560, genderTarget: 'female', icon: 'fa-solid fa-droplet', isActive: true})),
-                                ...['上手','下手','全臉','上腹','下腹','上背','下背','落腮鬍'].map(n => ({name: n, duration: 30, regularPrice: 899, vipPrice: 720, genderTarget: 'male', icon: 'fa-solid fa-droplet', isActive: true})),
-                                ...['大腿','小腿','臀部'].map(n => ({name: n, duration: 40, regularPrice: 899, vipPrice: 720, genderTarget: 'female', icon: 'fa-solid fa-hand-sparkles', isActive: true})),
-                                ...['大腿','小腿','臀部'].map(n => ({name: n, duration: 40, regularPrice: 1099, vipPrice: 880, genderTarget: 'male', icon: 'fa-solid fa-hand-sparkles', isActive: true})),
-                                {name: 'V / I / O (單部位)', duration: 30, regularPrice: 699, vipPrice: 560, genderTarget: 'female', icon: 'fa-solid fa-heart', isActive: true},
-                                {name: 'V + I', duration: 40, regularPrice: 1299, vipPrice: 1040, genderTarget: 'female', icon: 'fa-solid fa-heart', isActive: true},
-                                {name: 'V + I + O', duration: 50, regularPrice: 1799, vipPrice: 1440, genderTarget: 'female', icon: 'fa-solid fa-heart', isActive: true},
-                                {name: 'V / I / O (單部位)', duration: 30, regularPrice: 899, vipPrice: 720, genderTarget: 'male', icon: 'fa-solid fa-heart', isActive: true},
-                                {name: 'V + I', duration: 40, regularPrice: 1799, vipPrice: 1440, genderTarget: 'male', icon: 'fa-solid fa-heart', isActive: true},
-                                {name: 'V + I + O', duration: 60, regularPrice: 2599, vipPrice: 2080, genderTarget: 'male', icon: 'fa-solid fa-heart', isActive: true},
-                            ];
-                            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'services');
-                            for (let i = 0; i < defaults.length; i++) {
-                                await addDoc(colRef, { ...defaults[i], sortOrder: 0 });
+                    Swal.fire({
+                        title: '確認匯入',
+                        text: '即將自動為您匯入小部位、中部位、大部位及私密處預設品項。確定要匯入嗎？',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#c5a89c',
+                        cancelButtonColor: '#9ca3af',
+                        confirmButtonText: '確定匯入'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            isLoading.value = true;
+                            try {
+                                const defaults = [
+                                    ...['腋下'].map(n => ({name: n, duration: 20, regularPrice: 399, vipPrice: 320, genderTarget: 'female', icon: 'svg-underarm', isActive: true})),
+                                    ...['腋下'].map(n => ({name: n, duration: 20, regularPrice: 599, vipPrice: 480, genderTarget: 'male', icon: 'svg-underarm', isActive: true})),
+                                    ...['唇周','下巴','鬢角'].map(n => ({name: n, duration: 20, regularPrice: 399, vipPrice: 320, genderTarget: 'female', icon: 'svg-face', isActive: true})),
+                                    ...['唇周','下巴','鬢角'].map(n => ({name: n, duration: 20, regularPrice: 599, vipPrice: 480, genderTarget: 'male', icon: 'svg-face', isActive: true})),
+                                    ...['乳暈','後頸','肚臍'].map(n => ({name: n, duration: 20, regularPrice: 399, vipPrice: 320, genderTarget: 'female', icon: 'svg-body', isActive: true})),
+                                    ...['乳暈','後頸','肚臍'].map(n => ({name: n, duration: 20, regularPrice: 599, vipPrice: 480, genderTarget: 'male', icon: 'svg-body', isActive: true})),
+                                    ...['膝蓋'].map(n => ({name: n, duration: 20, regularPrice: 399, vipPrice: 320, genderTarget: 'female', icon: 'svg-leg', isActive: true})),
+                                    ...['膝蓋'].map(n => ({name: n, duration: 20, regularPrice: 599, vipPrice: 480, genderTarget: 'male', icon: 'svg-leg', isActive: true})),
+                                    ...['指頭'].map(n => ({name: n, duration: 20, regularPrice: 399, vipPrice: 320, genderTarget: 'female', icon: 'svg-arm', isActive: true})),
+                                    ...['指頭'].map(n => ({name: n, duration: 20, regularPrice: 599, vipPrice: 480, genderTarget: 'male', icon: 'svg-arm', isActive: true})),
+                                    ...['上手','下手'].map(n => ({name: n, duration: 30, regularPrice: 699, vipPrice: 560, genderTarget: 'female', icon: 'svg-arm', isActive: true})),
+                                    ...['上手','下手'].map(n => ({name: n, duration: 30, regularPrice: 899, vipPrice: 720, genderTarget: 'male', icon: 'svg-arm', isActive: true})),
+                                    ...['全臉','落腮鬍'].map(n => ({name: n, duration: 30, regularPrice: 699, vipPrice: 560, genderTarget: 'female', icon: 'svg-face', isActive: true})),
+                                    ...['全臉','落腮鬍'].map(n => ({name: n, duration: 30, regularPrice: 899, vipPrice: 720, genderTarget: 'male', icon: 'svg-face', isActive: true})),
+                                    ...['上腹','下腹','上背','下背'].map(n => ({name: n, duration: 30, regularPrice: 699, vipPrice: 560, genderTarget: 'female', icon: 'svg-body', isActive: true})),
+                                    ...['上腹','下腹','上背','下背'].map(n => ({name: n, duration: 30, regularPrice: 899, vipPrice: 720, genderTarget: 'male', icon: 'svg-body', isActive: true})),
+                                    ...['大腿','小腿'].map(n => ({name: n, duration: 40, regularPrice: 899, vipPrice: 720, genderTarget: 'female', icon: 'svg-leg', isActive: true})),
+                                    ...['大腿','小腿'].map(n => ({name: n, duration: 40, regularPrice: 1099, vipPrice: 880, genderTarget: 'male', icon: 'svg-leg', isActive: true})),
+                                    ...['臀部'].map(n => ({name: n, duration: 40, regularPrice: 899, vipPrice: 720, genderTarget: 'female', icon: 'svg-vio', isActive: true})),
+                                    ...['臀部'].map(n => ({name: n, duration: 40, regularPrice: 1099, vipPrice: 880, genderTarget: 'male', icon: 'svg-vio', isActive: true})),
+                                    {name: 'V / I / O (單部位)', duration: 30, regularPrice: 699, vipPrice: 560, genderTarget: 'female', icon: 'svg-vio', isActive: true},
+                                    {name: 'V + I', duration: 40, regularPrice: 1299, vipPrice: 1040, genderTarget: 'female', icon: 'svg-vio', isActive: true},
+                                    {name: 'V + I + O', duration: 50, regularPrice: 1799, vipPrice: 1440, genderTarget: 'female', icon: 'svg-vio', isActive: true},
+                                    {name: 'V / I / O (單部位)', duration: 30, regularPrice: 899, vipPrice: 720, genderTarget: 'male', icon: 'svg-vio', isActive: true},
+                                    {name: 'V + I', duration: 40, regularPrice: 1799, vipPrice: 1440, genderTarget: 'male', icon: 'svg-vio', isActive: true},
+                                    {name: 'V + I + O', duration: 60, regularPrice: 2599, vipPrice: 2080, genderTarget: 'male', icon: 'svg-vio', isActive: true},
+                                ];
+                                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'services');
+                                for (let i = 0; i < defaults.length; i++) {
+                                    await addDoc(colRef, { ...defaults[i], sortOrder: 0 });
+                                }
+                                Swal.fire('成功', '預設品項已全部匯入完畢！', 'success');
+                            } catch(e) {
+                                console.error(e);
+                                Swal.fire('錯誤', '匯入失敗', 'error');
                             }
-                            showAlert('成功', '預設品項已全部匯入完畢！');
-                        } catch(e) {
-                            console.error(e);
-                            showAlert('錯誤', '匯入失敗', 'error');
+                            isLoading.value = false;
                         }
-                        isLoading.value = false;
-                    }, '確定匯入');
+                    });
                 };
 
-                // --- Admins Management ---
                 const formAdmin = ref({ account: '', password: '' });
                 const saveAdminUser = async () => {
                     if (!isDbReady.value) return;
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'admins'), formAdmin.value);
                     formAdmin.value = { account: '', password: '' };
-                    showAlert('成功', '已新增管理員帳號');
+                    Swal.fire('成功', '已新增管理員帳號', 'success');
                 };
                 const deleteAdminUser = (id) => {
-                    showAlert('確認刪除', '確定要移除此管理員權限嗎？', 'warning', async () => {
-                        if(isDbReady.value) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'admins', id));
-                    }, '確定刪除');
-                };
-
-                // --- Alert UI ---
-                const alert = ref({ show: false, title: '', message: '', type: 'success', action: null, actionText: '' });
-                const showAlert = (title, message, type = 'success', action = null, actionText = '') => {
-                    alert.value = { show: true, title, message, type, action, actionText };
-                };
-                const closeAlert = () => alert.value.show = false;
-                const handleAlertAction = () => { if (alert.value.action) alert.value.action(); closeAlert(); };
-                
-                const getAlertIcon = () => alert.value.type === 'error' ? 'fa-solid fa-triangle-exclamation' : (alert.value.type === 'warning' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-check');
-                const getAlertColorClass = (part) => {
-                    let base = alert.value.type === 'error' ? 'red' : (alert.value.type === 'warning' ? 'yellow' : 'brand');
-                    return part === 'bg' ? `bg-${base}-100` : `text-${base}-600`;
-                };
-                const getAlertBtnClass = () => {
-                    if (alert.value.type === 'error') return 'bg-red-600 hover:bg-red-700 text-white';
-                    if (alert.value.type === 'warning') return 'bg-yellow-600 hover:bg-yellow-700 text-white';
-                    return currentView.value === 'admin' ? 'bg-admin-500 hover:bg-admin-600 text-white' : 'bg-brand-500 hover:bg-brand-600 text-white';
+                    Swal.fire({
+                        title: '確認移除',
+                        text: '確定要移除此管理員權限嗎？',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#9ca3af',
+                        confirmButtonText: '確定移除'
+                    }).then(async (result) => {
+                        if (result.isConfirmed && isDbReady.value) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'admins', id));
+                        }
+                    });
                 };
 
                 onMounted(() => {
@@ -1589,7 +1622,7 @@
                 return {
                     currentView, adminTab, isLoading, services, activeServices, bookings, closedDatesMap, admins, isSuperAdmin,
                     adminAccount, adminPassword, loginError, goToAdminLogin, verifyAdminLogin, logoutAdmin,
-                    verifyPhone, isVerified, checkMember, goToRegister, resetVerification,
+                    verifyPhone, isVerified, checkMember, goToRegister, resetVerification, renderIcon,
                     bookingForm, availableSlots, hiddenSubmitBtn, triggerSubmit, submitBooking, scrollToNext,
                     estimatedTotal, estimatedDuration, showVipInfo, serviceSearch, serviceFilterGender, filteredServices, updateServiceOrder,
                     isBookingModalOpen, editBookingForm, openEditBookingModal, closeBookingModal, saveBookingEdit, deleteBooking, getBookingColorClass, updateBookingStatus, copyStatusMessage,
@@ -1597,7 +1630,6 @@
                     openServiceModal, copyService, closeServiceModal, saveServiceData, toggleServiceStatus, deleteService, importDefaultServices,
                     isDateSettingModalOpen, editingDate, dateSettingForm, saveDateSetting, removeDateSetting,
                     formAdmin, saveAdminUser, deleteAdminUser,
-                    alert, showAlert, closeAlert, handleAlertAction, getAlertIcon, getAlertColorClass, getAlertBtnClass,
                     calendarDate, currentYear, currentMonth, calendarDays, prevMonth, nextMonth, goToToday, monthlyStats
                 };
             }
