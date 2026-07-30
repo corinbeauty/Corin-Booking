@@ -1150,32 +1150,22 @@
                     try {
                         let memberData = null;
                         
-                        // 根據提供的 rules，使用安全的 public 路徑進行搜尋
-                        const pathsToSearch = [
-                            collection(db, 'artifacts', appId, 'public', 'members'),
-                            collection(db, 'artifacts', appId, 'public', 'data', 'members'),
-                            collection(db, 'artifacts', appId, 'public', 'users'),
-                            collection(db, 'artifacts', appId, 'public', 'data', 'users')
-                        ];
+                        // 強制指向指定的會員資料庫路徑： /artifacts/{appId}/public/data/beauty_members
+                        const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'beauty_members');
 
-                        for (const colRef of pathsToSearch) {
-                            try {
-                                const q1 = query(colRef, where('phone', '==', bookingForm.value.phone));
-                                const snap1 = await getDocs(q1);
-                                if (!snap1.empty) { memberData = snap1.docs[0].data(); break; }
-                                
-                                const q2 = query(colRef, where('phoneNumber', '==', bookingForm.value.phone));
-                                const snap2 = await getDocs(q2);
-                                if (!snap2.empty) { memberData = snap2.docs[0].data(); break; }
-                            } catch(err) {
-                                // 忽略不存在的路徑錯誤
-                            }
+                        // 根據 phone 欄位進行搜尋比對
+                        const q = query(colRef, where('phone', '==', bookingForm.value.phone));
+                        const snap = await getDocs(q);
+
+                        if (!snap.empty) { 
+                            memberData = snap.docs[0].data(); 
                         }
                         
                         if (memberData) {
                             bookingForm.value.isVerified = true;
-                            bookingForm.value.name = memberData.name || memberData.displayName || memberData.username || '';
-                            bookingForm.value.birthday = memberData.birthday || memberData.birthDate || '';
+                            // 自動帶出姓名與生日
+                            bookingForm.value.name = memberData.name || '';
+                            bookingForm.value.birthday = memberData.birthday || '';
                             
                             Swal.fire({
                                 icon: 'success',
@@ -1190,7 +1180,7 @@
                             Swal.fire({
                                 icon: 'warning',
                                 title: '查無會員資料',
-                                text: '系統將在 2 秒後自動導向註冊頁面...',
+                                text: '系統將在 2.5 秒後自動導向註冊頁面...',
                                 showConfirmButton: false,
                                 timer: 2500,
                                 timerProgressBar: true
