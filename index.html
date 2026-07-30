@@ -19,8 +19,12 @@
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/zh-tw.js"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- 使用 SweetAlert2 取代舊的 Alert 模組 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- 引入 Vue.js (CDN) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
     <script>
         tailwind.config = {
@@ -49,15 +53,19 @@
             scrollbar-width: none;
         }
         body::-webkit-scrollbar { display: none; }
+        
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
         .glass-panel {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 8px 32px 0 rgba(197, 168, 156, 0.15);
         }
+
         .service-radio + label { transition: all 0.3s ease; }
+
         .loader {
             border-top-color: #c5a89c;
             animation: spinner 1.5s linear infinite;
@@ -66,8 +74,11 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
         input, select, textarea { font-size: 16px !important; }
+        
         [v-cloak] { display: none !important; }
+
         .step-enter-active, .step-leave-active { transition: all 0.4s ease; }
         .step-enter-from, .step-leave-to { opacity: 0; transform: translateY(-10px); max-height: 0; overflow: hidden; margin: 0; padding: 0; }
         .step-enter-to, .step-leave-from { opacity: 1; transform: translateY(1000px); max-height: 2000px; }
@@ -76,6 +87,7 @@
 <body class="text-gray-800 antialiased selection:bg-brand-200 selection:text-brand-900 bg-[#fcfcfc]">
 
   <div id="app" v-cloak class="min-h-screen flex flex-col">
+
     <template v-if="currentView === 'front'">
         <header class="sticky top-0 z-50 glass-panel border-b border-gray-100">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
@@ -94,10 +106,12 @@
         <main class="flex-grow max-w-md mx-auto w-full px-4 py-6 pb-32">
             <div class="mb-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">預約諮詢</h2>
+                
                 <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl shadow-sm mb-6">
                     <h3 class="text-red-800 font-bold mb-2 flex items-center gap-1"><i class="fa-solid fa-bullhorn"></i> 預約注意事項</h3>
                     <p class="text-sm text-red-700 font-bold mb-1">預約完成後請等待美容師回覆確認</p>
                     <p class="text-xs text-red-600 mb-3 leading-relaxed">※重要提醒：預約需提前2-3天才有辦法安排理想的時段，恕不接受當天預約操作，謝謝您的配合！</p>
+                    
                     <h4 class="text-sm font-bold text-gray-800 mb-1">溫馨提醒 :</h4>
                     <ol class="text-xs text-gray-700 list-decimal pl-4 space-y-1.5">
                         <li>因無淋浴設備，麻煩預約私密處課程的您，先自行在家清潔完再前往店內。</li>
@@ -111,6 +125,7 @@
 
             <form id="bookingForm" class="space-y-6" @submit.prevent="submitBooking">
                 
+                <!-- 步驟 1: 選擇美容師性別 -->
                 <div id="step-therapist" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-brand-100">
                     <label class="block text-sm font-bold text-gray-800">1. 選擇指定美容師 <span class="text-red-400">*</span></label>
                     <div class="grid grid-cols-2 gap-3">
@@ -131,6 +146,7 @@
                     </div>
                 </div>
 
+                <!-- 步驟 2: 選擇 VIP 身份 -->
                 <transition name="step">
                     <div id="step-vip" v-show="bookingForm.therapistGender" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800">2. 是否為 VIP 會員 <span class="text-red-400">*</span></label>
@@ -156,6 +172,7 @@
                     </div>
                 </transition>
 
+                <!-- 步驟 3: 選擇客戶性別 -->
                 <transition name="step">
                     <div id="step-gender" v-show="bookingForm.isVip !== null" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800">3. 請選擇您的性別 <span class="text-red-400">*</span></label>
@@ -178,12 +195,15 @@
                     </div>
                 </transition>
 
+                <!-- 步驟 4: 選擇服務項目 (可多選，取消平滑捲動) -->
                 <transition name="step">
                     <div id="step-services" v-show="bookingForm.customerGender" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800 mb-2">4. 選擇服務項目 (可多選) <span class="text-red-400">*</span></label>
+                        
                         <div v-if="activeServices.length === 0" class="text-center py-4 bg-gray-50 rounded-xl text-gray-500 text-sm">
                             目前沒有符合您選擇的服務項目。
                         </div>
+
                         <div v-else class="grid grid-cols-2 gap-3">
                             <div v-for="service in activeServices" :key="service.id" class="relative">
                                 <input type="checkbox" name="service" :id="'srv_' + service.id" :value="service.name" v-model="bookingForm.service" class="service-radio hidden">
@@ -200,6 +220,7 @@
                                 </label>
                             </div>
                         </div>
+
                         <div v-if="bookingForm.service.length > 0" class="mt-4 p-4 bg-brand-50 rounded-xl border border-brand-200 shadow-sm transition-all">
                             <div class="flex justify-between items-center mb-2 border-b border-brand-200/50 pb-2">
                                 <span class="text-sm font-bold text-gray-700">已選擇 {{ bookingForm.service.length }} 項服務</span>
@@ -214,6 +235,7 @@
                     </div>
                 </transition>
 
+                <!-- 步驟 5: 選擇日期 -->
                 <transition name="step">
                     <div id="step-date" v-show="bookingForm.service.length > 0" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800 border-b pb-2">5. 選擇預約日期 <span class="text-red-400">*</span></label>
@@ -228,11 +250,13 @@
                     </div>
                 </transition>
 
+                <!-- 步驟 6: 選擇時間 -->
                 <transition name="step">
                     <div id="step-time" v-show="bookingForm.date" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex items-center justify-between border-b pb-2">
                             <label class="block text-sm font-bold text-gray-800">6. 選擇預約時段 <span class="text-red-400">*</span></label>
                         </div>
+                        
                         <div v-if="availableSlots.length > 0" class="grid grid-cols-3 gap-2 mt-2">
                             <button
                                 v-for="slot in availableSlots" :key="slot.time" type="button"
@@ -255,10 +279,12 @@
                     </div>
                 </transition>
 
+                <!-- 步驟 7: 會員驗證及聯絡資訊 -->
                 <transition name="step">
                     <div id="step-phone" v-show="bookingForm.time" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <h3 class="text-sm font-bold text-gray-800 border-b pb-2">7. 驗證會員以填寫資料 <span class="text-red-400">*</span></h3>
                         
+                        <!-- 尚未驗證：輸入電話 -->
                         <div v-if="!bookingForm.isVerified">
                             <label for="verify-phone" class="block text-sm font-medium text-gray-700 mb-1">聯絡電話 <span class="text-red-400">*</span></label>
                             <div class="flex gap-2">
@@ -267,6 +293,7 @@
                             </div>
                         </div>
 
+                        <!-- 驗證成功：顯示唯讀資料與備註欄 -->
                         <div v-if="bookingForm.isVerified" class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
@@ -280,6 +307,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">生日</label>
                                 <input type="text" v-model="bookingForm.birthday" class="block w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" readonly>
                             </div>
+
                             <div>
                                 <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">顧客備註欄 (選填)</label>
                                 <textarea id="notes" v-model="bookingForm.notes" rows="3" class="block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 bg-gray-50 focus:bg-white transition-colors resize-none" placeholder="是否有特殊需求？"></textarea>
@@ -296,6 +324,7 @@
             </div>
         </main>
 
+        <!-- 驗證成功後顯示的浮動送出按鈕 -->
         <transition name="step">
             <div v-show="bookingForm.isVerified" class="fixed bottom-0 left-0 right-0 p-4 glass-panel border-t border-gray-100 z-40 pb-safe">
                 <div class="max-w-md mx-auto">
@@ -307,6 +336,7 @@
             </div>
         </transition>
 
+        <!-- VIP 資訊 Modal -->
         <div v-if="showVipInfo" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity" @click="showVipInfo = false">
             <div class="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl relative animate-[bounce_0.3s_ease-out]" @click.stop>
                 <button @click="showVipInfo = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
@@ -325,6 +355,7 @@
         </div>
     </template>
 
+    <!-- 後台登入 -->
     <template v-else-if="currentView === 'admin_login'">
         <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <div class="max-w-sm w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
@@ -357,6 +388,7 @@
         </div>
     </template>
 
+    <!-- 後台管理 -->
     <template v-else-if="currentView === 'admin'">
         <header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
             <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -376,6 +408,7 @@
         </header>
 
         <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-6">
+            <!-- 後台頁籤切換 -->
             <div class="flex space-x-2 border-b border-gray-200 mb-6 overflow-x-auto whitespace-nowrap pb-1">
                 <button @click="adminTab = 'calendar'" :class="{'border-admin-500 text-admin-600 border-b-2': adminTab === 'calendar', 'text-gray-500 hover:text-gray-700': adminTab !== 'calendar'}" class="px-4 py-2 font-medium text-sm transition-colors">
                     <i class="fa-regular fa-calendar-days mr-1"></i> 預約總表
@@ -386,6 +419,7 @@
                 <button @click="adminTab = 'schedule'" :class="{'border-admin-500 text-admin-600 border-b-2': adminTab === 'schedule', 'text-gray-500 hover:text-gray-700': adminTab !== 'schedule'}" class="px-4 py-2 font-medium text-sm transition-colors">
                     <i class="fa-regular fa-calendar-xmark mr-1"></i> 營業時間設定
                 </button>
+                <!-- 僅限最高權限顯示 -->
                 <button v-if="isSuperAdmin" @click="adminTab = 'services'" :class="{'border-admin-500 text-admin-600 border-b-2': adminTab === 'services', 'text-gray-500 hover:text-gray-700': adminTab !== 'services'}" class="px-4 py-2 font-medium text-sm transition-colors">
                     <i class="fa-solid fa-list mr-1"></i> 品項管理
                 </button>
@@ -394,10 +428,12 @@
                 </button>
             </div>
 
+            <!-- 預約總表 (月曆) 分頁 -->
             <div v-show="adminTab === 'calendar'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 <div class="flex flex-col md:flex-row md:items-center justify-between p-4 border-b gap-4">
                     <div class="flex flex-col md:flex-row md:items-center gap-4">
                         <h2 class="text-xl font-bold text-gray-800 whitespace-nowrap">{{ currentYear }} 年 {{ currentMonth + 1 }} 月</h2>
+                        <!-- 整月統計數據 -->
                         <div class="flex gap-2">
                             <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-medium">總人數: {{ monthlyStats.total }}</span>
                             <span class="text-xs bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-md font-medium">待確認: {{ monthlyStats.pending }}</span>
@@ -424,6 +460,8 @@
                         <div class="text-right text-xs mb-1" :class="[day.isToday ? 'font-bold text-white bg-admin-600 w-5 h-5 rounded-full flex items-center justify-center ml-auto shadow-sm' : 'mr-1']">
                             {{ day.date }}
                         </div>
+
+                        <!-- 預約清單 -->
                         <div class="flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide pt-1 px-1">
                             <div v-if="day.bookings && day.bookings.length > 0" class="flex flex-col gap-1">
                                 <div v-for="b in day.bookings" :key="b.id" class="text-[10px] px-1.5 py-1 rounded shadow-sm leading-tight truncate flex items-center gap-1 cursor-pointer transition-transform hover:scale-[1.02]"
@@ -438,6 +476,7 @@
                 </div>
             </div>
 
+            <!-- 預約列表分頁 -->
             <div v-show="adminTab === 'bookings'">
                 <div class="flex justify-between items-end mb-4">
                     <p class="text-sm text-gray-500">查看並管理所有客人的預約紀錄與施作狀態。</p>
@@ -486,6 +525,7 @@
                                             <i v-else-if="b.customerGender === 'male'" class="fa-solid fa-mars text-blue-500 text-xs" title="男性客戶"></i>
                                         </div>
                                         <div class="text-xs text-gray-400">{{ b.phone }}</div>
+                                        <!-- 在清單中顯示生日 -->
                                         <div v-if="b.birthday" class="text-[10px] text-brand-600 mt-0.5"><i class="fa-solid fa-cake-candles mr-1"></i>{{ b.birthday }}</div>
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">
@@ -514,6 +554,7 @@
                 </div>
             </div>
 
+            <!-- 休假日設定分頁 -->
             <div v-show="adminTab === 'schedule'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 class="text-lg font-bold text-gray-800 mb-2">營業時間與休假設定</h3>
                 <p class="text-sm text-gray-500 mb-6">點擊日曆上的日期，可將其設定為「全天公休」或「自訂營業時間」。預設營業時間為 12:00 - 21:00。</p>
@@ -538,10 +579,13 @@
                 </div>
             </div>
 
+            <!-- 品項管理分頁 (僅最高權限顯示) -->
             <div v-if="isSuperAdmin" v-show="adminTab === 'services'">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-3">
-                    <p class="text-sm text-gray-500">管理所有預約服務的項目與預設時間。您可手手動修改排序號碼以決定前台顯示順序。</p>
+                    <p class="text-sm text-gray-500">管理所有預約服務的項目與預設時間。您可手動修改排序號碼以決定前台顯示順序。</p>
+                    
                     <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <!-- 分類與搜尋篩選器 -->
                         <div class="flex gap-2 w-full md:w-auto">
                             <input type="text" v-model="serviceSearch" placeholder="搜尋品項名稱..." class="block w-full md:w-48 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-admin-500 focus:border-admin-500 text-sm">
                             <select v-model="serviceFilterGender" class="block w-full md:w-36 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-admin-500 focus:border-admin-500 text-sm">
@@ -550,6 +594,7 @@
                                 <option value="male">限男性客戶</option>
                             </select>
                         </div>
+                        
                         <div class="flex gap-2">
                             <button @click="importDefaultServices" class="flex-1 md:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
                                 <i class="fa-solid fa-download"></i> 匯入預設
@@ -613,6 +658,7 @@
                 </div>
             </div>
 
+            <!-- 權限管理分頁 (僅最高權限顯示) -->
             <div v-if="isSuperAdmin" v-show="adminTab === 'admins'">
                 <div class="flex justify-between items-end mb-4">
                     <p class="text-sm text-gray-500">新增或移除可登入後台的美容師帳號（一般帳號登入時將無法查看此頁面與品項管理）。</p>
@@ -659,6 +705,7 @@
             </div>
         </main>
 
+        <!-- 修改預約排程 Modal -->
         <div v-if="isBookingModalOpen" class="fixed inset-0 bg-black/50 z-[120] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
                 <div class="flex justify-between items-center mb-5 border-b pb-3">
@@ -667,7 +714,11 @@
                 </div>
                 <form @submit.prevent="saveBookingEdit" class="space-y-4">
                     <div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-600 mb-4">
-                        <p><strong>客戶：</strong>{{ editBookingForm.name }} ({{ editBookingForm.phone }}) <span v-if="editBookingForm.birthday" class="text-brand-600 ml-1"><i class="fa-solid fa-cake-candles mr-1"></i>{{editBookingForm.birthday}}</span></p>
+                        <p>
+                            <strong>客戶：</strong>{{ editBookingForm.name }} ({{ editBookingForm.phone }})
+                            <!-- 在編輯視窗中也顯示生日 -->
+                            <span v-if="editBookingForm.birthday" class="text-brand-600 ml-1"><i class="fa-solid fa-cake-candles mr-1"></i>{{editBookingForm.birthday}}</span>
+                        </p>
                         <p><strong>項目：</strong>{{ editBookingForm.service }}</p>
                     </div>
                     <div>
@@ -696,6 +747,7 @@
             </div>
         </div>
 
+        <!-- 特殊日期設定 Modal -->
         <div v-if="isDateSettingModalOpen" class="fixed inset-0 bg-black/50 z-[120] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
                 <div class="flex justify-between items-center mb-5 border-b pb-3">
@@ -707,6 +759,7 @@
                         <input type="checkbox" v-model="dateSettingForm.isClosed" class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
                         <span class="text-sm font-medium text-gray-700">設定為全天公休 (不開放預約)</span>
                     </label>
+                    
                     <div v-if="!dateSettingForm.isClosed" class="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
                         <h4 class="text-sm font-bold text-gray-700 mb-2"><i class="fa-regular fa-clock"></i> 自訂營業時間</h4>
                         <div>
@@ -718,6 +771,7 @@
                             <input type="time" v-model="dateSettingForm.end" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-admin-500 text-sm">
                         </div>
                     </div>
+
                     <div class="pt-2 flex gap-3">
                         <button type="button" @click="isDateSettingModalOpen = false" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium">取消</button>
                         <button type="button" @click="saveDateSetting" class="flex-1 px-4 py-2 bg-admin-500 text-white rounded-lg hover:bg-admin-600 font-medium">儲存設定</button>
@@ -726,6 +780,7 @@
             </div>
         </div>
 
+        <!-- 新增/編輯品項 Modal -->
         <div v-if="isServiceModalOpen" class="fixed inset-0 bg-black/50 z-[120] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
                 <div class="flex justify-between items-center mb-5 border-b pb-3">
@@ -791,11 +846,11 @@
         <p class="text-gray-600 font-medium">處理中...</p>
     </div>
 
-  </div> 
+  </div> <!-- End of #app -->
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
@@ -817,15 +872,17 @@
                 let auth = null;
                 const isDbReady = ref(false);
 
+                // --- State Management ---
                 const currentView = ref('front'); 
                 const adminTab = ref('calendar'); 
-                const isLoading = ref(false);
+                const isLoading = ref(true); // 預設載入中，等待 auth 初始化
                 
                 const services = ref([]);
                 const bookings = ref([]);
                 const closedDatesMap = ref({}); 
                 const admins = ref([]);
 
+                // --- Authentication (Admin) ---
                 const adminAccount = ref('');
                 const adminPassword = ref('');
                 const loginError = ref('');
@@ -836,6 +893,7 @@
                 const serviceSearch = ref('');
                 const serviceFilterGender = ref('all');
 
+                // --- Helpers ---
                 const timeToMins = (timeStr) => {
                     if(!timeStr) return 0;
                     const [h, m] = timeStr.split(':').map(Number);
@@ -847,26 +905,39 @@
                     return `${h}:${m}`;
                 };
 
+                // --- Initialization ---
                 const initFirebase = async () => {
                     try {
                         const app = initializeApp(userFirebaseConfig);
                         db = getFirestore(app);
                         auth = getAuth(app);
                         
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) await signInWithCustomToken(auth, token);
-                        else await signInAnonymously(auth);
+                        // 確保登入完成後再進行讀取，避免 Permission Denied
+                        onAuthStateChanged(auth, (user) => {
+                            if (user) {
+                                setupFirestoreListeners();
+                                isDbReady.value = true;
+                                isLoading.value = false;
+                            } else {
+                                // 嘗試匿名登入以獲取 public 讀取權限
+                                signInAnonymously(auth).catch((error) => {
+                                    console.error("Auth error:", error);
+                                    Swal.fire('系統警告', '資料庫連線權限異常，部分功能可能無法使用。', 'warning');
+                                    isLoading.value = false;
+                                });
+                            }
+                        });
 
-                        setupFirestoreListeners();
-                        isDbReady.value = true;
                     } catch(e) {
-                        console.warn("Firebase Init Failed.");
+                        console.warn("Firebase Init Failed.", e);
+                        isLoading.value = false;
                     }
                 };
 
                 const setupFirestoreListeners = () => {
                     if (!auth.currentUser || !db) return;
 
+                    // 監聽公用資料
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'services'), (snap) => {
                         let data = snap.docs.map(d => ({ id: d.id, sortOrder: 0, ...d.data() }));
                         data.sort((a, b) => {
@@ -878,7 +949,7 @@
                             return priceB - priceA;
                         });
                         services.value = data;
-                    }, (err) => console.error(err));
+                    }, (err) => console.error("Services Read Error:", err));
 
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'), (snap) => {
                         let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -887,7 +958,7 @@
                             return a.time.localeCompare(b.time);
                         });
                         bookings.value = data;
-                    }, (err) => console.error(err));
+                    }, (err) => console.error("Bookings Read Error:", err));
 
                     onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'schedule'), (snap) => {
                         if (snap.exists()) closedDatesMap.value = snap.data().dates || {};
@@ -942,6 +1013,7 @@
                     return now;
                 };
 
+                // 平滑捲動函數 (保留用於單選項目的引導)
                 const scrollToNext = (id) => {
                     setTimeout(() => {
                         const el = document.getElementById(id);
@@ -1052,6 +1124,7 @@
 
                 const triggerSubmit = () => { if (hiddenSubmitBtn.value) hiddenSubmitBtn.value.click(); };
 
+                // --- Verify Phone ---
                 const verifyPhone = async () => {
                     if (!bookingForm.value.phone || bookingForm.value.phone.length < 10) {
                         Swal.fire({
@@ -1063,11 +1136,11 @@
                         return;
                     }
                     
-                    if (!isDbReady.value || !db) {
+                    if (!isDbReady.value || !db || !auth.currentUser) {
                         Swal.fire({
                             icon: 'error',
                             title: '系統尚未就緒',
-                            text: '資料庫連線中，請稍後再試。',
+                            text: '資料庫尚未完成驗證，請重新整理網頁。',
                             confirmButtonColor: '#c5a89c'
                         });
                         return;
@@ -1077,13 +1150,12 @@
                     try {
                         let memberData = null;
                         
+                        // 根據提供的 rules，使用安全的 public 路徑進行搜尋
                         const pathsToSearch = [
                             collection(db, 'artifacts', appId, 'public', 'members'),
                             collection(db, 'artifacts', appId, 'public', 'data', 'members'),
                             collection(db, 'artifacts', appId, 'public', 'users'),
-                            collection(db, 'artifacts', appId, 'public', 'data', 'users'),
-                            collection(db, 'artifacts', appId, 'public', 'customers'),
-                            collection(db, 'artifacts', appId, 'public', 'data', 'customers')
+                            collection(db, 'artifacts', appId, 'public', 'data', 'users')
                         ];
 
                         for (const colRef of pathsToSearch) {
@@ -1096,7 +1168,7 @@
                                 const snap2 = await getDocs(q2);
                                 if (!snap2.empty) { memberData = snap2.docs[0].data(); break; }
                             } catch(err) {
-                                console.warn("Search path restriction or non-existent:", colRef.path);
+                                // 忽略不存在的路徑錯誤
                             }
                         }
                         
@@ -1197,7 +1269,7 @@
                             if (typeof liff !== 'undefined' && liff.isInClient()) {
                                 liff.sendMessages([{ type: 'text', text: messageText }])
                                     .then(() => liff.closeWindow())
-                                    .catch(err => Swal.fire({ icon: 'error', title: '錯誤', text: '傳送失敗，請截圖給我們。' }));
+                                    .catch(err => Swal.fire({ icon: 'error', title: '錯誤', text: '傳送失敗，請截圖給我們。', confirmButtonColor: '#c5a89c' }));
                             } else {
                                 window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
                                 bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', phone: '', name: '', notes: '', isVerified: false, birthday: '' };
