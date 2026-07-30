@@ -168,6 +168,10 @@
                                     <i class="fa-solid fa-user text-3xl mb-2" :class="bookingForm.isVip === false ? 'text-gray-500' : 'text-gray-300'"></i>
                                     <span class="text-sm font-medium">我不是 VIP</span>
                                 </label>
+                                <!-- VIP 說明按鈕 -->
+                                <button type="button" @click.stop="showVipInfo = true" class="absolute top-2 right-2 w-7 h-7 rounded border border-gray-200 flex items-center justify-center bg-white text-gray-400 hover:text-brand-500 hover:border-brand-300 transition-colors shadow-sm">
+                                    <i class="fa-solid fa-question text-xs"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -197,10 +201,10 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 4: 選擇服務項目 -->
+                <!-- 步驟 4: 選擇服務項目 (可多選) -->
                 <transition name="step">
                     <div v-show="bookingForm.customerGender" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <label class="block text-sm font-bold text-gray-800 mb-2">4. 選擇服務項目 <span class="text-red-400">*</span></label>
+                        <label class="block text-sm font-bold text-gray-800 mb-2">4. 選擇服務項目 (可多選) <span class="text-red-400">*</span></label>
                         
                         <div v-if="activeServices.length === 0" class="text-center py-4 bg-gray-50 rounded-xl text-gray-500 text-sm">
                             目前沒有符合您選擇的服務項目。
@@ -208,23 +212,39 @@
 
                         <div v-else class="grid grid-cols-2 gap-3">
                             <div v-for="service in activeServices" :key="service.id" class="relative">
-                                <input type="radio" name="service" :id="'srv_' + service.id" :value="service.name" v-model="bookingForm.service" class="service-radio hidden" required>
-                                <label :for="'srv_' + service.id" :class="bookingForm.service === service.name ? 'border-brand-400 bg-brand-50 text-brand-800 shadow-inner' : 'border-gray-200 hover:bg-gray-50'" class="flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer h-full transition-all">
-                                    <i :class="[service.icon, bookingForm.service === service.name ? 'text-brand-500' : 'text-gray-400']" class="text-2xl mb-2"></i>
+                                <input type="checkbox" name="service" :id="'srv_' + service.id" :value="service.name" v-model="bookingForm.service" class="service-radio hidden">
+                                <label :for="'srv_' + service.id" :class="bookingForm.service.includes(service.name) ? 'border-brand-400 bg-brand-50 text-brand-800 shadow-inner' : 'border-gray-200 hover:bg-gray-50'" class="flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer h-full transition-all">
+                                    <i :class="[service.icon, bookingForm.service.includes(service.name) ? 'text-brand-500' : 'text-gray-400']" class="text-2xl mb-2"></i>
                                     <span class="text-sm font-medium text-center">{{ service.name }}</span>
                                     <div class="flex flex-col items-center mt-1">
-                                        <span class="text-xs" :class="bookingForm.service === service.name ? 'text-brand-600' : 'text-gray-400'">{{ service.duration }} mins</span>
-                                        <span class="text-sm font-bold mt-0.5" :class="bookingForm.service === service.name ? 'text-brand-700' : 'text-gray-700'">NT$ {{ bookingForm.isVip ? (service.vipPrice || service.price || 0) : (service.regularPrice || service.price || 0) }}</span>
+                                        <span class="text-xs" :class="bookingForm.service.includes(service.name) ? 'text-brand-600' : 'text-gray-400'">{{ service.duration }} mins</span>
+                                        <span class="text-sm font-bold mt-0.5" :class="bookingForm.service.includes(service.name) ? 'text-brand-700' : 'text-gray-700'">NT$ {{ bookingForm.isVip ? (service.vipPrice || service.price || 0) : (service.regularPrice || service.price || 0) }}</span>
+                                    </div>
+                                    <div v-if="bookingForm.service.includes(service.name)" class="absolute top-2 right-2 text-brand-500">
+                                        <i class="fa-solid fa-circle-check"></i>
                                     </div>
                                 </label>
                             </div>
+                        </div>
+
+                        <!-- 預估消費總計區塊 -->
+                        <div v-if="bookingForm.service.length > 0" class="mt-4 p-4 bg-brand-50 rounded-xl border border-brand-200 shadow-sm transition-all">
+                            <div class="flex justify-between items-center mb-2 border-b border-brand-200/50 pb-2">
+                                <span class="text-sm font-bold text-gray-700">已選擇 {{ bookingForm.service.length }} 項服務</span>
+                                <span class="text-sm text-gray-600 font-medium"><i class="fa-regular fa-clock"></i> 約 {{ estimatedDuration }} 分鐘</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <span class="text-sm font-bold text-gray-700">預計消費金額</span>
+                                <span class="text-xl font-bold text-brand-700">NT$ {{ estimatedTotal }}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2 text-right">※ 實際消費金額以現場美容師核銷計算</p>
                         </div>
                     </div>
                 </transition>
 
                 <!-- 步驟 5: 選擇日期 -->
                 <transition name="step">
-                    <div v-show="bookingForm.service" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div v-show="bookingForm.service.length > 0" class="space-y-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800 border-b pb-2">5. 選擇預約日期 <span class="text-red-400">*</span></label>
                         <div>
                             <div class="relative">
@@ -311,6 +331,24 @@
                 </div>
             </div>
         </transition>
+
+        <!-- VIP 資訊 Modal -->
+        <div v-if="showVipInfo" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity" @click="showVipInfo = false">
+            <div class="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl relative animate-[bounce_0.3s_ease-out]" @click.stop>
+                <button @click="showVipInfo = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <div class="flex items-start gap-4 mt-2">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-500">
+                        <i class="fa-solid fa-crown text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-1">VIP 專屬優惠</h4>
+                        <p class="text-sm text-gray-600 leading-relaxed">VIP 享原價 8 折優惠及點數累積回饋，詳情請洽詢美容師。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </template>
 
     <!-- 後台登入 -->
@@ -393,10 +431,10 @@
                         <h2 class="text-xl font-bold text-gray-800 whitespace-nowrap">{{ currentYear }} 年 {{ currentMonth + 1 }} 月</h2>
                         <!-- 整月統計數據 -->
                         <div class="flex gap-2">
-                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-medium">總: {{ monthlyStats.total }}</span>
-                            <span class="text-xs bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-md font-medium">待: {{ monthlyStats.pending }}</span>
-                            <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-md font-medium">完: {{ monthlyStats.completed }}</span>
-                            <span class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded-md font-medium">消: {{ monthlyStats.cancelled }}</span>
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-medium">總人數: {{ monthlyStats.total }}</span>
+                            <span class="text-xs bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-md font-medium">待確認: {{ monthlyStats.pending }}</span>
+                            <span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-md font-medium">已完成: {{ monthlyStats.completed }}</span>
+                            <span class="text-xs bg-red-100 text-red-700 px-2.5 py-1 rounded-md font-medium">已取消: {{ monthlyStats.cancelled }}</span>
                         </div>
                     </div>
                     <div class="flex gap-2">
@@ -413,14 +451,14 @@
                 </div>
                 <div class="grid grid-cols-7 flex-grow auto-rows-[minmax(120px,auto)]">
                     <div v-for="(day, index) in calendarDays" :key="index" 
-                         class="border-r border-b p-1 h-32 flex flex-col"
-                         :class="[!day.isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white']">
+                         class="border-r border-b p-1 h-32 flex flex-col transition-colors"
+                         :class="[!day.isCurrentMonth ? 'bg-gray-50 text-gray-400' : (day.hasCustomSchedule ? 'bg-pink-50' : 'bg-white')]">
                         <div class="text-right text-xs mb-1" :class="[day.isToday ? 'font-bold text-white bg-admin-600 w-5 h-5 rounded-full flex items-center justify-center ml-auto shadow-sm' : 'mr-1']">
                             {{ day.date }}
                         </div>
 
                         <!-- 預約清單 -->
-                        <div class="flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide pt-1">
+                        <div class="flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide pt-1 px-1">
                             <div v-if="day.bookings && day.bookings.length > 0" class="flex flex-col gap-1">
                                 <div v-for="b in day.bookings" :key="b.id" class="text-[10px] px-1.5 py-1 rounded shadow-sm leading-tight truncate flex items-center gap-1 cursor-pointer transition-transform hover:scale-[1.02]"
                                      :class="getBookingColorClass(b)"
@@ -487,7 +525,7 @@
                                     <td class="px-4 py-3 text-gray-700">
                                         <div class="flex items-center gap-1">
                                             <i v-if="b.isVip" class="fa-solid fa-crown text-amber-500 text-xs" title="VIP"></i>
-                                            {{ b.service }}
+                                            <span class="truncate max-w-[120px]" :title="b.service">{{ b.service }}</span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">{{ b.duration }} 分</td>
@@ -533,15 +571,28 @@
 
             <!-- 品項管理分頁 (僅最高權限顯示) -->
             <div v-if="isSuperAdmin" v-show="adminTab === 'services'">
-                <div class="flex justify-between items-end mb-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-3">
                     <p class="text-sm text-gray-500">管理所有預約服務的項目與預設時間。</p>
-                    <div class="flex gap-2">
-                        <button @click="importDefaultServices" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
-                            <i class="fa-solid fa-download"></i> 匯入預設品項
-                        </button>
-                        <button @click="openServiceModal()" class="bg-admin-500 hover:bg-admin-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors">
-                            <i class="fa-solid fa-plus"></i> 新增品項
-                        </button>
+                    
+                    <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <!-- 分類與搜尋篩選器 -->
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <input type="text" v-model="serviceSearch" placeholder="搜尋品項名稱..." class="block w-full md:w-48 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-admin-500 focus:border-admin-500 text-sm">
+                            <select v-model="serviceFilterGender" class="block w-full md:w-36 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-admin-500 focus:border-admin-500 text-sm">
+                                <option value="all">所有適用對象</option>
+                                <option value="female">限女性客戶</option>
+                                <option value="male">限男性客戶</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button @click="importDefaultServices" class="flex-1 md:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                                <i class="fa-solid fa-download"></i> 匯入預設
+                            </button>
+                            <button @click="openServiceModal()" class="flex-1 md:flex-none bg-admin-500 hover:bg-admin-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 shadow-sm transition-colors">
+                                <i class="fa-solid fa-plus"></i> 新增品項
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -557,10 +608,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-if="services.length === 0" class="bg-white border-b">
-                                    <td colspan="5" class="px-4 py-8 text-center text-gray-400">尚無服務品項。</td>
+                                <tr v-if="filteredServices.length === 0" class="bg-white border-b">
+                                    <td colspan="5" class="px-4 py-8 text-center text-gray-400">查無符合篩選條件的服務品項。</td>
                                 </tr>
-                                <tr v-for="service in services" :key="service.id" class="bg-white border-b hover:bg-gray-50">
+                                <tr v-for="service in filteredServices" :key="service.id" class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-4 py-3">
                                         <label class="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" v-model="service.isActive" @change="toggleServiceStatus(service)" class="sr-only peer">
@@ -830,6 +881,13 @@
                 const loginError = ref('');
                 const isAdminAuthenticated = ref(false);
                 const isSuperAdmin = ref(false);
+                
+                // VIP Modal
+                const showVipInfo = ref(false);
+
+                // Service Filter
+                const serviceSearch = ref('');
+                const serviceFilterGender = ref('all');
 
                 // --- Helpers ---
                 const timeToMins = (timeStr) => {
@@ -888,16 +946,34 @@
                     }, (err) => console.error(err));
                 };
 
-                // 加入了 customerGender 屬性
-                const bookingForm = ref({ therapistGender: '', isVip: null, customerGender: '', service: '', date: '', time: '', name: '', phone: '', notes: '' });
+                // 表單綁定，注意 service 現在是陣列 []
+                const bookingForm = ref({ therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', name: '', phone: '', notes: '' });
                 
                 const activeServices = computed(() => {
                     return services.value.filter(s => {
                         if (!s.isActive) return false;
-                        // 改為根據「客戶性別 (customerGender)」過濾品項
                         if (!bookingForm.value.customerGender) return true;
                         return !s.genderTarget || s.genderTarget === 'all' || s.genderTarget === bookingForm.value.customerGender;
                     });
+                });
+
+                // 動態計算前端預估總價與總時長
+                const estimatedTotal = computed(() => {
+                    if (!bookingForm.value.service.length) return 0;
+                    return bookingForm.value.service.reduce((sum, name) => {
+                        const s = services.value.find(service => service.name === name);
+                        if (!s) return sum;
+                        const price = bookingForm.value.isVip ? Number(s.vipPrice || s.price || 0) : Number(s.regularPrice || s.price || 0);
+                        return sum + price;
+                    }, 0);
+                });
+
+                const estimatedDuration = computed(() => {
+                    if (!bookingForm.value.service.length) return 0;
+                    return bookingForm.value.service.reduce((sum, name) => {
+                        const s = services.value.find(service => service.name === name);
+                        return sum + (s ? Number(s.duration) : 0);
+                    }, 0);
                 });
                 
                 const hiddenSubmitBtn = ref(null);
@@ -931,12 +1007,12 @@
                 };
 
                 const availableSlots = computed(() => {
-                    if (!bookingForm.value.date || !bookingForm.value.service || !bookingForm.value.therapistGender) return [];
+                    if (!bookingForm.value.date || bookingForm.value.service.length === 0 || !bookingForm.value.therapistGender) return [];
 
-                    const serviceObj = services.value.find(s => s.name === bookingForm.value.service);
-                    const duration = serviceObj ? Number(serviceObj.duration) : 60;
+                    // 使用加總後的時長
+                    const duration = estimatedDuration.value;
                     const date = bookingForm.value.date;
-                    const gender = bookingForm.value.therapistGender; // 看排程依然是用治療師的時間去排
+                    const gender = bookingForm.value.therapistGender;
 
                     const dateSettings = closedDatesMap.value[date] || { isClosed: false, start: '12:00', end: '21:00' };
                     if (dateSettings.isClosed) return [];
@@ -980,21 +1056,25 @@
                 watch(() => bookingForm.value.therapistGender, () => {
                     bookingForm.value.isVip = null;
                     bookingForm.value.customerGender = '';
-                    bookingForm.value.service = '';
+                    bookingForm.value.service = [];
                     bookingForm.value.date = '';
                 });
                 watch(() => bookingForm.value.isVip, () => {
                     bookingForm.value.customerGender = '';
-                    bookingForm.value.service = '';
+                    bookingForm.value.service = [];
                     bookingForm.value.date = '';
                 });
                 watch(() => bookingForm.value.customerGender, () => {
-                    bookingForm.value.service = '';
+                    bookingForm.value.service = [];
                     bookingForm.value.date = '';
                 });
-                watch(() => bookingForm.value.service, (newVal) => {
-                    if (newVal) nextTick(() => { initFrontDatePicker(); });
-                    bookingForm.value.date = '';
+                // 當選擇的服務項目陣列長度改變時 (增減項目)
+                watch(() => bookingForm.value.service.length, (newLen, oldLen) => {
+                    // 若是從 0 變成至少 1 項，才初始化日曆，避免一直閃爍
+                    if (newLen > 0 && oldLen === 0) {
+                        nextTick(() => { initFrontDatePicker(); });
+                    }
+                    // 每次增減項目，總時長都會變，必須清除選好的時間重選
                     bookingForm.value.time = '';
                 });
                 watch(() => bookingForm.value.date, () => {
@@ -1006,16 +1086,16 @@
                 const submitBooking = async () => {
                     isLoading.value = true;
                     try {
-                        const serviceObj = services.value.find(s => s.name === bookingForm.value.service);
-                        const duration = serviceObj ? Number(serviceObj.duration) : 60;
-                        const price = serviceObj ? (bookingForm.value.isVip ? Number(serviceObj.vipPrice || serviceObj.price || 0) : Number(serviceObj.regularPrice || serviceObj.price || 0)) : 0;
+                        const duration = estimatedDuration.value;
+                        const price = estimatedTotal.value;
+                        const serviceString = bookingForm.value.service.join(' + ');
 
                         if (isDbReady.value) {
                             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'), {
                                 therapistGender: bookingForm.value.therapistGender,
                                 isVip: bookingForm.value.isVip,
-                                customerGender: bookingForm.value.customerGender, // 記錄客戶性別
-                                service: bookingForm.value.service,
+                                customerGender: bookingForm.value.customerGender, 
+                                service: serviceString,
                                 duration: duration,
                                 date: bookingForm.value.date,
                                 time: bookingForm.value.time,
@@ -1037,7 +1117,7 @@
                                           `VIP會員：${vipText}\n` +
                                           `姓名：${bookingForm.value.name}\n` +
                                           `電話：${bookingForm.value.phone}\n` +
-                                          `項目：${bookingForm.value.service}\n` +
+                                          `項目：${serviceString}\n` +
                                           `價格：NT$ ${price}\n` +
                                           `日期：${bookingForm.value.date}\n` +
                                           `時段：${bookingForm.value.time}\n` +
@@ -1052,7 +1132,7 @@
                                     .catch(err => alert('傳送失敗，請截圖給我們。'));
                             } else {
                                 window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
-                                bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: '', date: '', time: '', name: '', phone: '', notes: '' };
+                                bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', name: '', phone: '', notes: '' };
                             }
                         }, 800);
                     } catch(e) {
@@ -1074,7 +1154,7 @@
                         let authSuccess = false;
                         let isSuper = false;
                         
-                        // 最高權限 (永遠保留此帳號可登入，避免被意外刪除)
+                        // 最高權限
                         if (adminAccount.value === '信吉' && adminPassword.value === '7310168888') {
                             authSuccess = true;
                             isSuper = true;
@@ -1089,9 +1169,9 @@
                         
                         if (authSuccess) {
                             isAdminAuthenticated.value = true;
-                            isSuperAdmin.value = isSuper; // 設定權限狀態
+                            isSuperAdmin.value = isSuper;
                             currentView.value = 'admin';
-                            adminTab.value = 'calendar'; // 預設切換到總表
+                            adminTab.value = 'calendar'; 
                             adminAccount.value = '';
                             adminPassword.value = '';
                         } else {
@@ -1187,16 +1267,10 @@
                         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                         const dayBookings = bookings.value.filter(b => b.date === dateStr);
                         
-                        const stats = {
-                            total: dayBookings.length,
-                            pending: dayBookings.filter(b => b.status === 'pending' || !b.status).length,
-                            completed: dayBookings.filter(b => b.status === 'completed').length,
-                            cancelled: dayBookings.filter(b => b.status === 'cancelled').length
-                        };
-
                         days.push({ 
                             date: i, fullDate: dateStr, isCurrentMonth: true, isToday: dateStr === todayStr,
-                            bookings: dayBookings, stats: stats
+                            bookings: dayBookings,
+                            hasCustomSchedule: !!closedDatesMap.value[dateStr] // 判斷是否為休假日/調整日
                         });
                     }
                     const totalCells = days.length;
@@ -1253,6 +1327,15 @@
                 };
 
                 // --- Services Management ---
+                // 後台篩選器
+                const filteredServices = computed(() => {
+                    return services.value.filter(s => {
+                        const matchSearch = s.name.toLowerCase().includes(serviceSearch.value.toLowerCase());
+                        const matchGender = serviceFilterGender.value === 'all' || s.genderTarget === serviceFilterGender.value;
+                        return matchSearch && matchGender;
+                    });
+                });
+
                 const isServiceModalOpen = ref(false);
                 const editingService = ref(null);
                 const formService = ref({ name: '', duration: 60, regularPrice: 0, vipPrice: 0, icon: 'fa-solid fa-leaf', isActive: true, genderTarget: 'all' });
@@ -1381,6 +1464,7 @@
                     currentView, adminTab, isLoading, services, activeServices, bookings, closedDatesMap, admins, isSuperAdmin,
                     adminAccount, adminPassword, loginError, goToAdminLogin, verifyAdminLogin, logoutAdmin,
                     bookingForm, availableSlots, hiddenSubmitBtn, triggerSubmit, submitBooking,
+                    estimatedTotal, estimatedDuration, showVipInfo, serviceSearch, serviceFilterGender, filteredServices, // 新增的 Return variables
                     isBookingModalOpen, editBookingForm, openEditBookingModal, closeBookingModal, saveBookingEdit, deleteBooking, getBookingColorClass, updateBookingStatus,
                     isServiceModalOpen, editingService, formService, availableIcons,
                     openServiceModal, copyService, closeServiceModal, saveServiceData, toggleServiceStatus, deleteService, importDefaultServices,
