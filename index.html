@@ -987,18 +987,29 @@
                     isLoading.value = true;
                     try {
                         const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'beauty_members'), where('phone', '==', verifyPhone.value));
-                        const snap = await getDocs(q);
-                        
-                        if (!snap.empty) {
-                            const data = snap.docs[0].data();
-                            bookingForm.value.name = data.name || '';
-                            bookingForm.value.phone = data.phone || verifyPhone.value;
-                            bookingForm.value.birthday = data.birthday || '';
-                            isVerified.value = true;
-                            
-                            showAlert('驗證成功', `歡迎回來，${bookingForm.value.name}！\n請繼續完成下方預約步驟。`, 'success');
-                            scrollToNext('step2');
-                        } else {
+                const snap = await getDocs(q);
+                
+                if (!snap.empty) {
+                    const data = snap.docs[0].data();
+                    bookingForm.value.name = data.name || '';
+                    bookingForm.value.phone = data.phone || verifyPhone.value;
+                    
+                    // 處理生日，只抓取月與日
+                    let bd = data.birthday || '';
+                    if (bd) {
+                        const parts = bd.split(/[-/]/);
+                        if (parts.length >= 2) {
+                            // 擷取最後兩個部分當作月與日 (例：1990-05-20 轉為 05/20)
+                            bd = `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+                        }
+                    }
+                    bookingForm.value.birthday = bd;
+                    
+                    isVerified.value = true;
+                    
+                    showAlert('驗證成功', `歡迎回來，${bookingForm.value.name}！\n請繼續完成下方預約步驟。`, 'success');
+                    scrollToNext('step2');
+                } else {
                             showAlert('查無會員資料', '系統中找不到您的手機號碼。\n即將為您導向註冊頁面...', 'error', () => {
                                 window.location.href = 'https://check-balance-jbiy.vercel.app/';
                             }, '前往註冊');
