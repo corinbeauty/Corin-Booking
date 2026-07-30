@@ -10,20 +10,24 @@
     <meta property="og:description" content="Corin Beauty預約系統">
     <meta property="og:type" content="website">
     
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 引入 LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
+    <!-- 引入 Flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/zh-tw.js"></script>
     
-    <!-- 使用 SweetAlert2 取代舊的 Alert 模組 -->
+    <!-- 引入 SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- 引入 Vue.js (CDN) -->
+    <!-- 引入 Vue.js -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
     <script>
@@ -76,9 +80,7 @@
         }
         
         input, select, textarea { font-size: 16px !important; }
-        
         [v-cloak] { display: none !important; }
-
         .step-enter-active, .step-leave-active { transition: all 0.4s ease; }
         .step-enter-from, .step-leave-to { opacity: 0; transform: translateY(-10px); max-height: 0; overflow: hidden; margin: 0; padding: 0; }
         .step-enter-to, .step-leave-from { opacity: 1; transform: translateY(1000px); max-height: 2000px; }
@@ -89,6 +91,7 @@
   <div id="app" v-cloak class="min-h-screen flex flex-col">
 
     <template v-if="currentView === 'front'">
+        <!-- 前台頭部 -->
         <header class="sticky top-0 z-50 glass-panel border-b border-gray-100">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -289,7 +292,7 @@
                             <label for="verify-phone" class="block text-sm font-medium text-gray-700 mb-1">聯絡電話 <span class="text-red-400">*</span></label>
                             <div class="flex gap-2">
                                 <input type="tel" id="verify-phone" v-model="bookingForm.phone" class="block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 bg-gray-50 focus:bg-white transition-colors" placeholder="請輸入手機號碼以比對資料" pattern="[0-9]{10}" required>
-                                <button type="button" @click="verifyPhone" class="bg-gray-800 text-white px-5 rounded-lg font-bold hover:bg-gray-700 transition-colors whitespace-nowrap">驗證</button>
+                                <button type="button" @click="verifyPhone" class="bg-gray-800 text-white px-5 rounded-lg font-bold hover:bg-gray-700 transition-colors whitespace-nowrap shadow-sm">驗證</button>
                             </div>
                         </div>
 
@@ -319,7 +322,7 @@
                 <button type="submit" ref="hiddenSubmitBtn" class="hidden"></button>
             </form>
             
-            <div class="text-center text-xs text-gray-400 mt-10">
+            <div class="text-center text-xs text-gray-400 mt-10 mb-6">
                 原點數位科技 © 2026 All rights reserved.
             </div>
         </main>
@@ -433,7 +436,6 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between p-4 border-b gap-4">
                     <div class="flex flex-col md:flex-row md:items-center gap-4">
                         <h2 class="text-xl font-bold text-gray-800 whitespace-nowrap">{{ currentYear }} 年 {{ currentMonth + 1 }} 月</h2>
-                        <!-- 整月統計數據 -->
                         <div class="flex gap-2">
                             <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-medium">總人數: {{ monthlyStats.total }}</span>
                             <span class="text-xs bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-md font-medium">待確認: {{ monthlyStats.pending }}</span>
@@ -585,7 +587,6 @@
                     <p class="text-sm text-gray-500">管理所有預約服務的項目與預設時間。您可手動修改排序號碼以決定前台顯示順序。</p>
                     
                     <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                        <!-- 分類與搜尋篩選器 -->
                         <div class="flex gap-2 w-full md:w-auto">
                             <input type="text" v-model="serviceSearch" placeholder="搜尋品項名稱..." class="block w-full md:w-48 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-admin-500 focus:border-admin-500 text-sm">
                             <select v-model="serviceFilterGender" class="block w-full md:w-36 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-admin-500 focus:border-admin-500 text-sm">
@@ -716,7 +717,6 @@
                     <div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-600 mb-4">
                         <p>
                             <strong>客戶：</strong>{{ editBookingForm.name }} ({{ editBookingForm.phone }})
-                            <!-- 在編輯視窗中也顯示生日 -->
                             <span v-if="editBookingForm.birthday" class="text-brand-600 ml-1"><i class="fa-solid fa-cake-candles mr-1"></i>{{editBookingForm.birthday}}</span>
                         </p>
                         <p><strong>項目：</strong>{{ editBookingForm.service }}</p>
@@ -846,8 +846,9 @@
         <p class="text-gray-600 font-medium">處理中...</p>
     </div>
 
-  </div> <!-- End of #app -->
+  </div>
 
+    <!-- Firebase 匯入模組必須使用正確的 URL 格式 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -857,7 +858,8 @@
 
         createApp({
             setup() {
-                const userFirebaseConfig = {
+                // 正確的 Firebase 初始化設定
+                const firebaseConfig = {
                     apiKey: "AIzaSyCe0KE7va2H4-A6XECdzhTUCjhTeT6FOJM",
                     authDomain: "check-balance-13da9.firebaseapp.com",
                     projectId: "check-balance-13da9",
@@ -867,22 +869,21 @@
                     measurementId: "G-J4KY08ECZR"
                 };
                 
-                const appId = userFirebaseConfig.projectId; 
+                const appId = firebaseConfig.projectId; 
                 let db = null;
                 let auth = null;
                 const isDbReady = ref(false);
 
-                // --- State Management ---
+                // --- 狀態管理 ---
                 const currentView = ref('front'); 
                 const adminTab = ref('calendar'); 
-                const isLoading = ref(true); // 預設載入中，等待 auth 初始化
+                const isLoading = ref(true); 
                 
                 const services = ref([]);
                 const bookings = ref([]);
                 const closedDatesMap = ref({}); 
                 const admins = ref([]);
 
-                // --- Authentication (Admin) ---
                 const adminAccount = ref('');
                 const adminPassword = ref('');
                 const loginError = ref('');
@@ -893,7 +894,7 @@
                 const serviceSearch = ref('');
                 const serviceFilterGender = ref('all');
 
-                // --- Helpers ---
+                // --- 輔助函數 ---
                 const timeToMins = (timeStr) => {
                     if(!timeStr) return 0;
                     const [h, m] = timeStr.split(':').map(Number);
@@ -904,22 +905,35 @@
                     const m = (mins % 60).toString().padStart(2, '0');
                     return `${h}:${m}`;
                 };
+                
+                const scrollToNext = (id) => {
+                    setTimeout(() => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            const offset = 80;
+                            const bodyRect = document.body.getBoundingClientRect().top;
+                            const elementRect = el.getBoundingClientRect().top;
+                            const elementPosition = elementRect - bodyRect;
+                            const offsetPosition = elementPosition - offset;
+                            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                        }
+                    }, 150);
+                };
 
-                // --- Initialization ---
+                // --- 初始化 Firebase 與 Auth ---
                 const initFirebase = async () => {
                     try {
-                        const app = initializeApp(userFirebaseConfig);
+                        const app = initializeApp(firebaseConfig);
                         db = getFirestore(app);
                         auth = getAuth(app);
                         
-                        // 確保登入完成後再進行讀取，避免 Permission Denied
+                        // 匿名登入，解決 PERMISSION_DENIED 問題
                         onAuthStateChanged(auth, (user) => {
                             if (user) {
                                 setupFirestoreListeners();
                                 isDbReady.value = true;
                                 isLoading.value = false;
                             } else {
-                                // 嘗試匿名登入以獲取 public 讀取權限
                                 signInAnonymously(auth).catch((error) => {
                                     console.error("Auth error:", error);
                                     Swal.fire('系統警告', '資料庫連線權限異常，部分功能可能無法使用。', 'warning');
@@ -937,7 +951,6 @@
                 const setupFirestoreListeners = () => {
                     if (!auth.currentUser || !db) return;
 
-                    // 監聽公用資料
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'services'), (snap) => {
                         let data = snap.docs.map(d => ({ id: d.id, sortOrder: 0, ...d.data() }));
                         data.sort((a, b) => {
@@ -949,7 +962,7 @@
                             return priceB - priceA;
                         });
                         services.value = data;
-                    }, (err) => console.error("Services Read Error:", err));
+                    }, (err) => console.error(err));
 
                     onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'), (snap) => {
                         let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -958,7 +971,7 @@
                             return a.time.localeCompare(b.time);
                         });
                         bookings.value = data;
-                    }, (err) => console.error("Bookings Read Error:", err));
+                    }, (err) => console.error(err));
 
                     onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'schedule'), (snap) => {
                         if (snap.exists()) closedDatesMap.value = snap.data().dates || {};
@@ -1008,25 +1021,7 @@
                 const hiddenSubmitBtn = ref(null);
                 let frontDatePicker = null;
 
-                const getMinSelectableDate = () => {
-                    const now = new Date();
-                    return now;
-                };
-
-                // 平滑捲動函數 (保留用於單選項目的引導)
-                const scrollToNext = (id) => {
-                    setTimeout(() => {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            const offset = 80;
-                            const bodyRect = document.body.getBoundingClientRect().top;
-                            const elementRect = el.getBoundingClientRect().top;
-                            const elementPosition = elementRect - bodyRect;
-                            const offsetPosition = elementPosition - offset;
-                            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                        }
-                    }, 150);
-                };
+                const getMinSelectableDate = () => new Date();
 
                 const selectTime = (timeSlot) => {
                     bookingForm.value.time = timeSlot;
@@ -1124,25 +1119,15 @@
 
                 const triggerSubmit = () => { if (hiddenSubmitBtn.value) hiddenSubmitBtn.value.click(); };
 
-                // --- Verify Phone ---
+                // --- 驗證電話號碼 ---
                 const verifyPhone = async () => {
                     if (!bookingForm.value.phone || bookingForm.value.phone.length < 10) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '錯誤',
-                            text: '請輸入完整的10碼手機號碼。',
-                            confirmButtonColor: '#c5a89c'
-                        });
+                        Swal.fire({ icon: 'error', title: '錯誤', text: '請輸入完整的10碼手機號碼。', confirmButtonColor: '#c5a89c' });
                         return;
                     }
                     
                     if (!isDbReady.value || !db || !auth.currentUser) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '系統尚未就緒',
-                            text: '資料庫尚未完成驗證，請重新整理網頁。',
-                            confirmButtonColor: '#c5a89c'
-                        });
+                        Swal.fire({ icon: 'error', title: '系統錯誤', text: '資料庫尚未完成驗證，請重新整理網頁。', confirmButtonColor: '#c5a89c' });
                         return;
                     }
 
@@ -1150,10 +1135,8 @@
                     try {
                         let memberData = null;
                         
-                        // 強制指向指定的會員資料庫路徑： /artifacts/{appId}/public/data/beauty_members
+                        // 精準指向指定的資料庫路徑
                         const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'beauty_members');
-
-                        // 根據 phone 欄位進行搜尋比對
                         const q = query(colRef, where('phone', '==', bookingForm.value.phone));
                         const snap = await getDocs(q);
 
@@ -1163,19 +1146,16 @@
                         
                         if (memberData) {
                             bookingForm.value.isVerified = true;
-                            // 自動帶出姓名與生日
                             bookingForm.value.name = memberData.name || '';
                             bookingForm.value.birthday = memberData.birthday || '';
                             
                             Swal.fire({
                                 icon: 'success',
                                 title: '歡迎回來！',
-                                text: '資料已載入。需待美容師回覆才算預約成功唷~請耐心等候！',
+                                text: '需待美容師回覆才算預約成功唷~請耐心等候！',
                                 confirmButtonColor: '#c5a89c'
                             });
-                            setTimeout(() => {
-                                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                            }, 300);
+                            setTimeout(() => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }, 300);
                         } else {
                             Swal.fire({
                                 icon: 'warning',
@@ -1190,12 +1170,7 @@
                         }
                     } catch(e) {
                         console.error("Verification error:", e);
-                        Swal.fire({
-                            icon: 'error',
-                            title: '系統錯誤',
-                            text: '驗證連線失敗，請稍後再試。',
-                            confirmButtonColor: '#c5a89c'
-                        });
+                        Swal.fire({ icon: 'error', title: '系統錯誤', text: '驗證連線失敗，請稍後再試。', confirmButtonColor: '#c5a89c' });
                     } finally {
                         isLoading.value = false;
                     }
@@ -1203,12 +1178,7 @@
 
                 const submitBooking = async () => {
                     if (!bookingForm.value.isVerified) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: '提醒',
-                            text: '請先完成會員手機驗證',
-                            confirmButtonColor: '#c5a89c'
-                        });
+                        Swal.fire({ icon: 'warning', title: '提醒', text: '請先完成會員手機驗證', confirmButtonColor: '#c5a89c' });
                         return;
                     }
                 
@@ -1254,6 +1224,10 @@
                                           `備註：${bookingForm.value.notes || '無'}\n\n` +
                                           `💡 請幫我確認此預約是否成立，謝謝！`;
 
+                        const resetForm = () => {
+                            bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', phone: '', name: '', notes: '', isVerified: false, birthday: '' };
+                        };
+
                         setTimeout(() => {
                             isLoading.value = false;
                             if (typeof liff !== 'undefined' && liff.isInClient()) {
@@ -1261,23 +1235,17 @@
                                     .then(() => liff.closeWindow())
                                     .catch(err => {
                                         console.warn("LIFF 自動傳送失敗，啟用備用方案", err);
-                                        // 失敗時的備用方案：跳轉 LINE URL Scheme，讓客人手動按送出
                                         window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
-                                        bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', phone: '', name: '', notes: '', isVerified: false, birthday: '' };
+                                        resetForm();
                                     });
                             } else {
                                 window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
-                                bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', phone: '', name: '', notes: '', isVerified: false, birthday: '' };
+                                resetForm();
                             }
                         }, 800);
                     } catch(e) {
                         console.error(e);
-                        Swal.fire({
-                            icon: 'error',
-                            title: '錯誤',
-                            text: '預約送出失敗，請稍後再試。',
-                            confirmButtonColor: '#c5a89c'
-                        });
+                        Swal.fire({ icon: 'error', title: '錯誤', text: '預約送出失敗，請稍後再試。', confirmButtonColor: '#c5a89c' });
                         isLoading.value = false;
                     }
                 };
@@ -1604,19 +1572,31 @@
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'admins'), formAdmin.value);
                     formAdmin.value = { account: '', password: '' };
                     Swal.fire({ icon: 'success', title: '成功', text: '已新增管理員帳號', confirmButtonColor: '#16a34a' });
-                const getAlertBtnClass = () => {
-                    if (alert.value.type === 'error') return 'bg-red-600 hover:bg-red-700 text-white';
-                    if (alert.value.type === 'warning') return 'bg-yellow-600 hover:bg-yellow-700 text-white';
-                    return currentView.value === 'admin' ? 'bg-admin-500 hover:bg-admin-600 text-white' : 'bg-brand-500 hover:bg-brand-600 text-white';
+                }; // <-- 修復了這裡缺失的大括號
+
+                const deleteAdminUser = (id) => {
+                    Swal.fire({
+                        title: '確認刪除',
+                        text: "確定要移除此管理員權限嗎？",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: '確定刪除',
+                        cancelButtonText: '取消'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            if(isDbReady.value) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'admins', id));
+                        }
+                    });
                 };
 
                 onMounted(() => {
                     initFirebase();
 
-                    // 初始化 LINE LIFF
                     if (typeof liff !== 'undefined') {
                         liff.init({ 
-                            liffId: "2010909434-eVswjkpc" // 這裡已換成您的專屬 LIFF ID
+                            liffId: "2010909434-eVswjkpc"
                         }).then(() => {
                             console.log("LIFF 初始化成功");
                         }).catch((err) => {
