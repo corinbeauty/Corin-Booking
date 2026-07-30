@@ -198,7 +198,7 @@
                     </div>
                 </transition>
 
-                <!-- 步驟 4: 選擇服務項目 (可多選，取消平滑捲動) -->
+                <!-- 步驟 4: 選擇服務項目 (可多選，取消平滑捲動以利多選操作) -->
                 <transition name="step">
                     <div id="step-services" v-show="bookingForm.customerGender" class="space-y-3 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
                         <label class="block text-sm font-bold text-gray-800 mb-2">4. 選擇服務項目 (可多選) <span class="text-red-400">*</span></label>
@@ -495,7 +495,7 @@
                                     <th class="px-4 py-3 min-w-[120px]">服務項目</th>
                                     <th class="px-4 py-3 min-w-[100px]">顧客備註</th>
                                     <th class="px-4 py-3 w-16">時長</th>
-                                    <th class="px-4 py-3 w-28 text-right">操作</th>
+                                    <th class="px-4 py-3 w-40 text-right">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -542,6 +542,10 @@
                                     </td>
                                     <td class="px-4 py-3">{{ b.duration }} 分</td>
                                     <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                                        <!-- 通知按鈕 -->
+                                        <button @click="copyNotification(b)" class="text-green-600 hover:text-green-900 px-2 py-1.5 rounded hover:bg-green-50 text-xs font-medium border border-green-200" title="複製 LINE 通知">
+                                            <i class="fa-brands fa-line mr-1"></i>通知
+                                        </button>
                                         <button @click="openEditBookingModal(b)" class="text-blue-600 hover:text-blue-900 px-2 py-1.5 rounded hover:bg-blue-50 text-xs font-medium border border-blue-200">
                                             修改
                                         </button>
@@ -848,7 +852,6 @@
 
   </div>
 
-    <!-- Firebase 匯入模組必須使用正確的 URL 格式 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -858,7 +861,6 @@
 
         createApp({
             setup() {
-                // 正確的 Firebase 初始化設定
                 const firebaseConfig = {
                     apiKey: "AIzaSyCe0KE7va2H4-A6XECdzhTUCjhTeT6FOJM",
                     authDomain: "check-balance-13da9.firebaseapp.com",
@@ -927,7 +929,6 @@
                         db = getFirestore(app);
                         auth = getAuth(app);
                         
-                        // 匿名登入，解決 PERMISSION_DENIED 問題
                         onAuthStateChanged(auth, (user) => {
                             if (user) {
                                 setupFirestoreListeners();
@@ -1135,7 +1136,6 @@
                     try {
                         let memberData = null;
                         
-                        // 精準指向指定的資料庫路徑
                         const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'beauty_members');
                         const q = query(colRef, where('phone', '==', bookingForm.value.phone));
                         const snap = await getDocs(q);
@@ -1443,6 +1443,47 @@
                     });
                 };
 
+                // 複製通知功能 (依照 iFrame 限制使用 document.execCommand)
+                const copyNotification = (b) => {
+                    let msg = '';
+                    if (b.status === 'completed') {
+                        msg = `🎉 【預約成功通知】 🎉\n\n親愛的 ${b.name} 您好：\n您的預約已確認成功！\n\n📌 預約日期：${b.date}\n⏰ 預約時間：${b.time}\n🌸 服務項目：${b.service}\n\n期待您的光臨！如果有任何問題，請隨時與我們聯絡。\nCorin 專業日式無痛除毛 敬上`;
+                    } else if (b.status === 'cancelled') {
+                        msg = `⚠️ 【預約取消通知】 ⚠️\n\n親愛的 ${b.name} 您好：\n您於 ${b.date} ${b.time} 的預約已為您取消。\n\n若有需要重新預約，歡迎隨時與我們聯絡！\nCorin 專業日式無痛除毛 敬上`;
+                    } else {
+                        msg = `⏳ 【預約待確認】 ⏳\n\n親愛的 ${b.name} 您好：\n您於 ${b.date} ${b.time} 的預約我們已經收到，目前正在為您安排時段，請稍候美容師的回覆確認，謝謝！\nCorin 專業日式無痛除毛 敬上`;
+                    }
+
+                    const textArea = document.createElement("textarea");
+                    textArea.value = msg;
+                    // 防止畫面跳動與閃爍
+                    textArea.style.position = "fixed";
+                    textArea.style.top = "0";
+                    textArea.style.left = "0";
+                    textArea.style.opacity = "0";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    try {
+                        const successful = document.execCommand('copy');
+                        if(successful) {
+                            Swal.fire({
+                                title: '複製成功！',
+                                text: '已將通知訊息複製到剪貼簿，請直接至 LINE 貼上傳送給客人。',
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            throw new Error("Copy failed");
+                        }
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: '複製失敗', text: '您的瀏覽器不支援自動複製，請手動輸入通知。', confirmButtonColor: '#16a34a' });
+                    }
+                    document.body.removeChild(textArea);
+                };
+
                 const filteredServices = computed(() => {
                     return services.value.filter(s => {
                         const matchSearch = s.name.toLowerCase().includes(serviceSearch.value.toLowerCase());
@@ -1572,7 +1613,7 @@
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'admins'), formAdmin.value);
                     formAdmin.value = { account: '', password: '' };
                     Swal.fire({ icon: 'success', title: '成功', text: '已新增管理員帳號', confirmButtonColor: '#16a34a' });
-                }; // <-- 修復了這裡缺失的大括號
+                };
 
                 const deleteAdminUser = (id) => {
                     Swal.fire({
@@ -1615,7 +1656,7 @@
                     adminAccount, adminPassword, loginError, goToAdminLogin, verifyAdminLogin, logoutAdmin,
                     bookingForm, availableSlots, hiddenSubmitBtn, triggerSubmit, submitBooking,
                     estimatedTotal, estimatedDuration, showVipInfo, serviceSearch, serviceFilterGender, filteredServices, updateServiceOrder,
-                    isBookingModalOpen, editBookingForm, openEditBookingModal, closeBookingModal, saveBookingEdit, deleteBooking, getBookingColorClass, updateBookingStatus,
+                    isBookingModalOpen, editBookingForm, openEditBookingModal, closeBookingModal, saveBookingEdit, deleteBooking, getBookingColorClass, updateBookingStatus, copyNotification,
                     isServiceModalOpen, editingService, formService, availableIcons,
                     openServiceModal, copyService, closeServiceModal, saveServiceData, toggleServiceStatus, deleteService, importDefaultServices,
                     isDateSettingModalOpen, editingDate, dateSettingForm, saveDateSetting, removeDateSetting,
