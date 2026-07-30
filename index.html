@@ -284,10 +284,6 @@
                                 <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">顧客備註欄 (選填)</label>
                                 <textarea id="notes" v-model="bookingForm.notes" rows="3" class="block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 bg-gray-50 focus:bg-white transition-colors resize-none" placeholder="是否有特殊需求？"></textarea>
                             </div>
-                            <div class="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg flex items-start gap-3 mt-4">
-                                <i class="fa-solid fa-circle-info mt-0.5"></i>
-                                <p>待美容師回覆確認後，才算預約成功喔！請確認無誤後送出預約。</p>
-                            </div>
                         </div>
                     </div>
                 </transition>
@@ -490,6 +486,7 @@
                                             <i v-else-if="b.customerGender === 'male'" class="fa-solid fa-mars text-blue-500 text-xs" title="男性客戶"></i>
                                         </div>
                                         <div class="text-xs text-gray-400">{{ b.phone }}</div>
+                                        <div v-if="b.birthday" class="text-[10px] text-brand-600 mt-0.5"><i class="fa-solid fa-cake-candles mr-1"></i>{{ b.birthday }}</div>
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">
                                         <div class="flex items-start gap-1">
@@ -1068,20 +1065,37 @@
                     
                     isLoading.value = true;
                     try {
-                        const membersRef = collection(db, 'artifacts', appId, 'public', 'data', 'members');
-                        const q = query(membersRef, where('phone', '==', bookingForm.value.phone));
-                        const querySnapshot = await getDocs(q);
+                        let memberData = null;
                         
-                        if (!querySnapshot.empty) {
-                            const memberData = querySnapshot.docs[0].data();
+                        const pathsToSearch = [
+                            collection(db, 'artifacts', appId, 'public', 'data', 'members'),
+                            collection(db, 'artifacts', appId, 'public', 'data', 'users'),
+                            collection(db, 'artifacts', appId, 'public', 'data', 'customers'),
+                            collection(db, 'artifacts', appId, 'public', 'members'),
+                            collection(db, 'artifacts', appId, 'public', 'users')
+                        ];
+
+                        for (const colRef of pathsToSearch) {
+                            try {
+                                const q1 = query(colRef, where('phone', '==', bookingForm.value.phone));
+                                const snap1 = await getDocs(q1);
+                                if (!snap1.empty) { memberData = snap1.docs[0].data(); break; }
+                                
+                                const q2 = query(colRef, where('phoneNumber', '==', bookingForm.value.phone));
+                                const snap2 = await getDocs(q2);
+                                if (!snap2.empty) { memberData = snap2.docs[0].data(); break; }
+                            } catch(err) { }
+                        }
+                        
+                        if (memberData) {
                             bookingForm.value.isVerified = true;
-                            bookingForm.value.name = memberData.name || '';
-                            bookingForm.value.birthday = memberData.birthday || '';
+                            bookingForm.value.name = memberData.name || memberData.displayName || memberData.username || '';
+                            bookingForm.value.birthday = memberData.birthday || memberData.birthDate || '';
                             
                             Swal.fire({
                                 icon: 'success',
                                 title: '歡迎回來！',
-                                text: '已為您帶入會員資料，請確認無誤後送出預約。',
+                                text: '資料已載入。需待美容師回覆才算預約成功唷~請耐心等候！',
                                 confirmButtonColor: '#c5a89c'
                             });
                             setTimeout(() => {
