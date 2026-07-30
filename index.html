@@ -1259,7 +1259,12 @@
                             if (typeof liff !== 'undefined' && liff.isInClient()) {
                                 liff.sendMessages([{ type: 'text', text: messageText }])
                                     .then(() => liff.closeWindow())
-                                    .catch(err => Swal.fire({ icon: 'error', title: '錯誤', text: '傳送失敗，請截圖給我們。', confirmButtonColor: '#c5a89c' }));
+                                    .catch(err => {
+                                        console.warn("LIFF 自動傳送失敗，啟用備用方案", err);
+                                        // 失敗時的備用方案：跳轉 LINE URL Scheme，讓客人手動按送出
+                                        window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
+                                        bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', phone: '', name: '', notes: '', isVerified: false, birthday: '' };
+                                    });
                             } else {
                                 window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(messageText)}`;
                                 bookingForm.value = { therapistGender: '', isVip: null, customerGender: '', service: [], date: '', time: '', phone: '', name: '', notes: '', isVerified: false, birthday: '' };
@@ -1599,26 +1604,26 @@
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'admins'), formAdmin.value);
                     formAdmin.value = { account: '', password: '' };
                     Swal.fire({ icon: 'success', title: '成功', text: '已新增管理員帳號', confirmButtonColor: '#16a34a' });
-                };
-                const deleteAdminUser = (id) => {
-                    Swal.fire({
-                        title: '確認刪除',
-                        text: "確定要移除此管理員權限嗎？",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#6b7280',
-                        confirmButtonText: '確定刪除',
-                        cancelButtonText: '取消'
-                    }).then(async (result) => {
-                        if (result.isConfirmed) {
-                            if(isDbReady.value) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'admins', id));
-                        }
-                    });
+                const getAlertBtnClass = () => {
+                    if (alert.value.type === 'error') return 'bg-red-600 hover:bg-red-700 text-white';
+                    if (alert.value.type === 'warning') return 'bg-yellow-600 hover:bg-yellow-700 text-white';
+                    return currentView.value === 'admin' ? 'bg-admin-500 hover:bg-admin-600 text-white' : 'bg-brand-500 hover:bg-brand-600 text-white';
                 };
 
                 onMounted(() => {
                     initFirebase();
+
+                    // 初始化 LINE LIFF
+                    if (typeof liff !== 'undefined') {
+                        liff.init({ 
+                            liffId: "2010909434-eVswjkpc" // 這裡已換成您的專屬 LIFF ID
+                        }).then(() => {
+                            console.log("LIFF 初始化成功");
+                        }).catch((err) => {
+                            console.error("LIFF 初始化失敗", err);
+                        });
+                    }
+
                     window.addEventListener('hashchange', () => {
                         currentView.value = (window.location.hash === '#admin' && !isAdminAuthenticated.value) ? 'admin_login' : (window.location.hash === '#admin' ? 'admin' : 'front');
                     });
