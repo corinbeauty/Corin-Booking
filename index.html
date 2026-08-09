@@ -13,6 +13,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
@@ -71,6 +72,13 @@
         .step-enter-active, .step-leave-active { transition: all 0.4s ease; }
         .step-enter-from, .step-leave-to { opacity: 0; transform: translateY(-10px); max-height: 0; overflow: hidden; margin: 0; padding: 0; }
         .step-enter-to, .step-leave-from { opacity: 1; transform: translateY(1000px); max-height: 2000px; }
+
+        /* 公告彈窗專用精美動畫與細節 */
+        .swal2-popup.custom-announcement-popup {
+            border-radius: 1.25rem !important;
+            padding: 1.5rem !important;
+            font-family: 'Noto Sans TC', sans-serif !important;
+        }
     </style>
 </head>
 <body class="text-gray-800 antialiased selection:bg-brand-200 selection:text-brand-900 bg-[#fcfcfc]">
@@ -81,8 +89,12 @@
         <header class="sticky top-0 z-50 glass-panel border-b border-gray-100">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white shadow-md">
-                        <i class="fa-solid fa-spa text-sm"></i>
+                    <div class="flex-shrink-0 flex items-center justify-center mr-1">
+                        <svg viewBox="0 0 150 120" class="h-10 w-auto" xmlns="http://www.w3.org/2000/svg">
+                            <text x="5" y="90" font-family="'Playfair Display', serif" font-weight="700" font-size="100px" fill="#D6B6A1">C</text>
+                            <text x="70" y="90" font-family="'Playfair Display', serif" font-weight="700" font-size="100px" fill="#A8836B">R</text>
+                            <text x="72" y="112" font-family="'Noto Sans TC', sans-serif" font-weight="400" font-size="11px" fill="#A8836B" letter-spacing="0.35em" text-anchor="middle">HAIR REMOVAL</text>
+                        </svg>
                     </div>
                     <h1 class="text-lg font-bold text-gray-800 tracking-wider">Corin 專業日式無痛除毛</h1>
                 </div>
@@ -853,6 +865,35 @@
                 const serviceSearch = ref('');
                 const serviceFilterGender = ref('all');
 
+                // 精美系統公告彈窗
+                const showAnnouncementNotice = () => {
+                    Swal.fire({
+                        title: '<div class="flex items-center justify-center gap-2 text-brand-800 text-lg font-bold"><i class="fa-solid fa-bell text-brand-500"></i> 預約系統優化升級公告</div>',
+                        html: `
+                            <div class="text-left text-sm text-gray-700 leading-relaxed space-y-3 py-2">
+                                <div class="bg-brand-50/80 p-3.5 rounded-xl border border-brand-100 text-brand-900 text-xs font-medium">
+                                    <p class="font-bold text-sm mb-1 text-brand-800">親愛的貴賓 您好：</p>
+                                    <p>即日起，因本館預約系統正在進行優化與轉換升級，若您在預約操作上有任何疑問或遇到問題，請隨時透過我們的 <strong class="text-brand-700">官方 LINE 帳號</strong> 傳送訊息。</p>
+                                </div>
+                                <p class="text-xs text-gray-600 pl-1">
+                                    收到您的訊息後，美容師與工程團隊將會第一時間協助您確認預約狀態並為您解答，感謝您的包容與配合！
+                                </p>
+                            </div>
+                        `,
+                        confirmButtonText: '我知道了，開始預約',
+                        confirmButtonColor: '#c5a89c',
+                        customClass: {
+                            popup: 'custom-announcement-popup'
+                        },
+                        showClass: {
+                            popup: 'animate-[fadeInDown_0.3s_ease-out]'
+                        },
+                        hideClass: {
+                            popup: 'animate-[fadeOutUp_0.2s_ease-in]'
+                        }
+                    });
+                };
+
                 // === SVG 象形圖庫 ===
                 const customSvgIcons = {
                     'svg-face': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 21a8 8 0 0 0 8-8c0-5.5-4-11-8-11S4 7.5 4 13a8 8 0 0 0 8 8z"/><path d="M12 14v3"/></svg>',
@@ -1617,6 +1658,13 @@
                         currentView.value = (window.location.hash === '#admin' && !isAdminAuthenticated.value) ? 'admin_login' : (window.location.hash === '#admin' ? 'admin' : 'front');
                     });
                     if (window.location.hash === '#admin') currentView.value = 'admin_login';
+
+                    // 開啟頁面時自動彈出精美公告通知
+                    if (window.location.hash !== '#admin') {
+                        setTimeout(() => {
+                            showAnnouncementNotice();
+                        }, 500);
+                    }
                 });
 
                 return {
@@ -1630,7 +1678,7 @@
                     openServiceModal, copyService, closeServiceModal, saveServiceData, toggleServiceStatus, deleteService, importDefaultServices,
                     isDateSettingModalOpen, editingDate, dateSettingForm, saveDateSetting, removeDateSetting,
                     formAdmin, saveAdminUser, deleteAdminUser,
-                    calendarDate, currentYear, currentMonth, calendarDays, prevMonth, nextMonth, goToToday, monthlyStats
+                    calendarDate, currentYear, currentMonth, calendarDays, prevMonth, nextMonth, goToToday, monthlyStats, showAnnouncementNotice
                 };
             }
         }).mount('#app');
