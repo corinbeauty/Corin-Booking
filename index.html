@@ -230,7 +230,6 @@
                                 <input type="checkbox" name="service" :id="'srv_' + service.id" :value="service.name" v-model="bookingForm.service" class="service-radio hidden">
                                 <label :for="'srv_' + service.id" :class="bookingForm.service.includes(service.name) ? 'border-brand-400 bg-brand-50 text-brand-800 shadow-inner' : 'border-gray-200 hover:bg-gray-50'" class="flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer h-full transition-all">
                                     
-                                    <!-- 專屬象形圖渲染 -->
                                     <div v-html="renderIcon(service.icon)" :class="[bookingForm.service.includes(service.name) ? 'text-brand-500' : 'text-gray-400']" class="w-10 h-10 mb-2 flex items-center justify-center"></div>
                                     
                                     <span class="text-sm font-medium text-center">{{ service.name }}</span>
@@ -416,6 +415,7 @@
                 </button>
             </div>
 
+            <!-- 月曆總表 -->
             <div v-show="adminTab === 'calendar'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 <div class="flex flex-col md:flex-row md:items-center justify-between p-4 border-b gap-4">
                     <div class="flex flex-col md:flex-row md:items-center gap-4">
@@ -443,8 +443,9 @@
                     <div v-for="(day, index) in calendarDays" :key="index" 
                          @click="day.date ? openAdminNewBookingModal(day.fullDate) : null"
                          class="border-r border-b p-1 h-32 flex flex-col transition-colors"
-                         :class="[!day.isCurrentMonth ? 'bg-gray-50 text-gray-400 cursor-default' : (day.hasCustomSchedule ? 'bg-pink-50 cursor-pointer hover:bg-pink-100' : 'bg-white cursor-pointer hover:bg-gray-50')]">
+                         :class="[!day.isCurrentMonth ? 'bg-gray-50 text-gray-400 cursor-default' : (day.isClosed ? 'bg-pink-50 cursor-pointer hover:bg-pink-100' : 'bg-white cursor-pointer hover:bg-gray-50')]">
                         <div class="text-right text-xs mb-1" :class="[day.isToday ? 'font-bold text-white bg-admin-600 w-5 h-5 rounded-full flex items-center justify-center ml-auto shadow-sm' : 'mr-1']">
+                            <span v-if="day.isClosed" class="float-left text-[10px] text-pink-500 font-bold mt-0.5 ml-1">休</span>
                             {{ day.date }}
                         </div>
                         <div class="flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide pt-1 px-1">
@@ -461,6 +462,7 @@
                 </div>
             </div>
 
+            <!-- 列表管理 -->
             <div v-show="adminTab === 'bookings'">
                 <div class="flex justify-between items-end mb-4">
                     <p class="text-sm text-gray-500">查看並管理所有客人的預約紀錄與施作狀態。</p>
@@ -540,6 +542,7 @@
                 </div>
             </div>
 
+            <!-- 可預約時間設定 -->
             <div v-show="adminTab === 'schedule'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 class="text-lg font-bold text-gray-800 mb-2">可預約時間與休假設定</h3>
                 <p class="text-sm text-gray-500 mb-6">點擊日曆上的日期，可將其設定為「全天公休」或「自訂營業時間」。預設營業時間為 12:00 - 21:00。</p>
@@ -564,6 +567,7 @@
                 </div>
             </div>
 
+            <!-- 品項管理 -->
             <div v-if="isSuperAdmin" v-show="adminTab === 'services'">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-3">
                     <p class="text-sm text-gray-500">管理所有預約服務的項目與預設時間。您可手動修改排序號碼以決定前台顯示順序。</p>
@@ -1166,14 +1170,12 @@
 
                     frontDatePicker = flatpickr(el, {
                         locale: "zh_tw", minDate: new Date(), dateFormat: "Y-m-d",
-                        // --- 修改處：預設星期日無法選擇，除非特別設定開啟 ---
                         disable: [ (date) => { 
                             const dateStr = flatpickr.formatDate(date, "Y-m-d");
                             const setting = closedDatesMap.value[dateStr];
                             if (setting !== undefined) return setting.isClosed === true;
                             return date.getDay() === 0; 
                         } ],
-                        // ---------------------------------------------
                         onChange: (selectedDates, dateStr) => {
                             bookingForm.value.date = dateStr; bookingForm.value.time = ''; scrollToNext('step7');
                         }
@@ -1184,11 +1186,9 @@
                     if (!bookingForm.value.date || bookingForm.value.service.length === 0 || !bookingForm.value.therapistGender) return [];
                     const duration = estimatedDuration.value; const date = bookingForm.value.date; const gender = bookingForm.value.therapistGender;
                     
-                    // --- 修改處：預設星期日為關閉 ---
                     const dObj = new Date(date.replace(/-/g, '/'));
                     const isSunday = dObj.getDay() === 0;
                     const dateSettings = closedDatesMap.value[date] || { isClosed: isSunday, start: '12:00', end: '21:00' };
-                    // -----------------------------
                     
                     if (dateSettings.isClosed) return [];
 
@@ -1304,18 +1304,35 @@
 
                     adminCalendar = flatpickr(el, {
                         inline: true, locale: "zh_tw", dateFormat: "Y-m-d",
+                        // --- 小月曆渲染邏輯（標註休假日為粉底紅字）---
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const dateStr = flatpickr.formatDate(dayElem.dateObj, "Y-m-d");
+                            const setting = closedDatesMap.value[dateStr];
+                            const isSunday = dayElem.dateObj.getDay() === 0;
+                            const isClosed = setting !== undefined ? setting.isClosed : isSunday;
+                            
+                            if (isClosed) {
+                                dayElem.style.backgroundColor = '#fdf2f8'; // bg-pink-50
+                                dayElem.style.color = '#be185d'; // text-pink-700
+                                dayElem.style.fontWeight = 'bold';
+                                dayElem.style.border = 'none';
+                            } else if (setting && !setting.isClosed) {
+                                dayElem.style.backgroundColor = '#eff6ff'; // bg-blue-50
+                                dayElem.style.color = '#1d4ed8'; // text-blue-700
+                                dayElem.style.fontWeight = 'bold';
+                                dayElem.style.border = 'none';
+                            }
+                        },
                         onChange: (selectedDates, dateStr) => {
                             if (dateStr) {
                                 editingDate.value = dateStr;
                                 const existing = closedDatesMap.value[dateStr];
-                                // --- 修改處：後台點擊日期時，若為星期日則預設狀態為關閉 ---
                                 if (existing) dateSettingForm.value = { ...existing };
                                 else {
                                     const dObj = new Date(dateStr.replace(/-/g, '/'));
                                     const isSunday = dObj.getDay() === 0;
                                     dateSettingForm.value = { isClosed: isSunday, start: '12:00', end: '21:00' };
                                 }
-                                // ---------------------------------------------------
                                 isDateSettingModalOpen.value = true;
                             }
                         }
@@ -1327,7 +1344,6 @@
                     const newDates = { ...closedDatesMap.value, [editingDate.value]: dateSettingForm.value };
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'schedule'), { dates: newDates });
                     isDateSettingModalOpen.value = false;
-                    if (adminCalendar) adminCalendar.clear();
                 };
 
                 const removeDateSetting = async (date) => {
@@ -1337,6 +1353,11 @@
                 };
 
                 watch(adminTab, (newTab) => { if (newTab === 'schedule') nextTick(() => { initAdminCalendar(); }); });
+                
+                // 監聽休假日設定，若有變更立刻重新繪製小月曆以更新顏色
+                watch(closedDatesMap, () => {
+                    if (adminCalendar) adminCalendar.redraw();
+                }, { deep: true });
 
                 const calendarDate = ref(new Date());
                 const currentYear = computed(() => calendarDate.value.getFullYear());
@@ -1363,9 +1384,18 @@
                     for (let i = 1; i <= daysInMonth; i++) {
                         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                         const dayBookings = bookings.value.filter(b => b.date === dateStr);
+                        
+                        // --- 判斷該日期是否為休假日（包含預設星期日）---
+                        const dObj = new Date(year, month, i);
+                        const isSunday = dObj.getDay() === 0;
+                        const setting = closedDatesMap.value[dateStr];
+                        const isClosed = setting !== undefined ? setting.isClosed : isSunday;
+
                         days.push({ 
                             date: i, fullDate: dateStr, isCurrentMonth: true, isToday: dateStr === todayStr,
-                            bookings: dayBookings, hasCustomSchedule: !!closedDatesMap.value[dateStr] 
+                            bookings: dayBookings, 
+                            isClosed: isClosed, // 供 HTML 使用
+                            hasCustomSchedule: !!setting && !setting.isClosed 
                         });
                     }
                     const totalCells = days.length;
